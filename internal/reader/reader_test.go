@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/iskorotkov/compiler/internal/data/literal"
 	"github.com/iskorotkov/compiler/internal/fn/option"
-	"github.com/iskorotkov/compiler/internal/literal"
 	"github.com/iskorotkov/compiler/internal/reader"
 )
 

@@ -7,8 +7,8 @@ import (
 	"os"
 	"regexp"
 
+	"github.com/iskorotkov/compiler/internal/data/literal"
 	"github.com/iskorotkov/compiler/internal/fn/option"
-	"github.com/iskorotkov/compiler/internal/literal"
 )
 
 // wordBoundaryRegex is used for finding boundaries between two literals or other boundaries.
