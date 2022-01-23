@@ -18,8 +18,8 @@ var wordBoundaryRegex = regexp.MustCompile(`\W`)
 type Element = option.Option[literal.Literal, error]
 
 type Reader struct {
-	buffer  int
-	options option.Factory[literal.Literal, error]
+	buffer int
+	option option.Factory[literal.Literal, error]
 }
 
 func New(buffer int) *Reader {
@@ -50,7 +50,7 @@ func (s Reader) Read(r io.Reader) <-chan Element {
 				break
 			}
 			if err := scanner.Err(); err != nil {
-				ch <- s.options.None(err)
+				ch <- s.option.None(err)
 				return
 			}
 
@@ -58,7 +58,7 @@ func (s Reader) Read(r io.Reader) <-chan Element {
 			literals := s.splitLiterals(line, lineNumber)
 
 			for _, lit := range literals {
-				ch <- s.options.Some(lit)
+				ch <- s.option.Some(lit)
 			}
 
 			lineNumber++
