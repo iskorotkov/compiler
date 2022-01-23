@@ -20,6 +20,9 @@ jobs:
     
     - name: Set up Go 1.18
       run: go install golang.org/dl/go1.18beta1@latest
+    
+    - name: Download Go 1.18 toolchain
+      run: go1.18beta1 download
 
     - name: Build
       run: go1.18beta1 build -v ./...
