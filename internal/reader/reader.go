@@ -15,9 +15,10 @@ import (
 // We match word boundaries so that we can extract all symbols for future analysis.
 var wordBoundaryRegex = regexp.MustCompile(`\W`)
 
-type Element = fn.ValueOrErr[literal.Literal, error]
+type Element = fn.Option[literal.Literal, error]
 
 type Reader struct {
+	fn.OptionFactory[literal.Literal, error]
 	Buffer int
 }
 
@@ -49,7 +50,7 @@ func (s Reader) Read(r io.Reader) <-chan Element {
 				break
 			}
 			if err := scanner.Err(); err != nil {
-				ch <- Element{Err: err}
+				ch <- s.None(err)
 				return
 			}
 
@@ -57,7 +58,7 @@ func (s Reader) Read(r io.Reader) <-chan Element {
 			literals := s.splitLiterals(line, lineNumber)
 
 			for _, lit := range literals {
-				ch <- Element{Value: lit}
+				ch <- s.Some(lit)
 			}
 
 			lineNumber++
