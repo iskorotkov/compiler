@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/iskorotkov/compiler/internal/fn"
+	"github.com/iskorotkov/compiler/internal/fn/option"
 	"github.com/iskorotkov/compiler/internal/literal"
 	"github.com/iskorotkov/compiler/internal/reader"
 )
@@ -92,7 +92,7 @@ func Test(t *testing.T) {
 				t.Run(test.name, func(t *testing.T) {
 					t.Parallel()
 
-					var actual []fn.Option[literal.Literal, error]
+					var actual []option.Option[literal.Literal, error]
 					for value := range r.Read(strings.NewReader(test.input)) {
 						actual = append(actual, value)
 					}

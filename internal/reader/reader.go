@@ -7,7 +7,7 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/iskorotkov/compiler/internal/fn"
+	"github.com/iskorotkov/compiler/internal/fn/option"
 	"github.com/iskorotkov/compiler/internal/literal"
 )
 
@@ -15,16 +15,16 @@ import (
 // We match word boundaries so that we can extract all symbols for future analysis.
 var wordBoundaryRegex = regexp.MustCompile(`\W`)
 
-type Element = fn.Option[literal.Literal, error]
+type Element = option.Option[literal.Literal, error]
 
 type Reader struct {
-	fn.OptionFactory[literal.Literal, error]
-	Buffer int
+	buffer  int
+	options option.Factory[literal.Literal, error]
 }
 
 func New(buffer int) *Reader {
 	return &Reader{
-		Buffer: buffer,
+		buffer: buffer,
 	}
 }
 
@@ -38,7 +38,7 @@ func (s Reader) ReadFile(filename string) (<-chan Element, error) {
 }
 
 func (s Reader) Read(r io.Reader) <-chan Element {
-	ch := make(chan Element, s.Buffer)
+	ch := make(chan Element, s.buffer)
 
 	go func() {
 		defer close(ch)
@@ -50,7 +50,7 @@ func (s Reader) Read(r io.Reader) <-chan Element {
 				break
 			}
 			if err := scanner.Err(); err != nil {
-				ch <- s.None(err)
+				ch <- s.options.None(err)
 				return
 			}
 
@@ -58,7 +58,7 @@ func (s Reader) Read(r io.Reader) <-chan Element {
 			literals := s.splitLiterals(line, lineNumber)
 
 			for _, lit := range literals {
-				ch <- s.Some(lit)
+				ch <- s.options.Some(lit)
 			}
 
 			lineNumber++
