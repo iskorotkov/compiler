@@ -55,11 +55,7 @@ func (s Reader) Read(r io.Reader) <-chan Element {
 			}
 
 			line := scanner.Text()
-			literals := s.splitLiterals(line, lineNumber)
-
-			for _, lit := range literals {
-				ch <- s.option.Some(lit)
-			}
+			s.splitLine(line, lineNumber, ch)
 
 			lineNumber++
 		}
@@ -68,9 +64,7 @@ func (s Reader) Read(r io.Reader) <-chan Element {
 	return ch
 }
 
-func (s Reader) splitLiterals(input string, lineNumber literal.LineNumber) []literal.Literal {
-	var res []literal.Literal
-
+func (s Reader) splitLine(input string, lineNumber literal.LineNumber, ch chan<- Element) {
 	inputLength := literal.ColNumber(len(input))
 	offset := literal.ColNumber(0)
 	rest := input
@@ -80,7 +74,7 @@ func (s Reader) splitLiterals(input string, lineNumber literal.LineNumber) []lit
 		if boundary == nil {
 			if len(rest) > 0 {
 				// Add the rest of the line.
-				res = append(res, literal.New(rest, lineNumber, offset, inputLength))
+				ch <- s.option.Some(literal.New(rest, lineNumber, offset, inputLength))
 			}
 
 			break
@@ -90,18 +84,16 @@ func (s Reader) splitLiterals(input string, lineNumber literal.LineNumber) []lit
 
 		if boundaryStart > 0 {
 			// Add discovered literal.
-			res = append(res, literal.New(rest[:boundaryStart], lineNumber, offset, offset+boundaryStart))
+			ch <- s.option.Some(literal.New(rest[:boundaryStart], lineNumber, offset, offset+boundaryStart))
 		}
 
 		// Add discovered boundary between two literals or other boundaries.
-		res = append(res, literal.New(rest[boundaryStart:boundaryEnd], lineNumber, offset+boundaryStart, offset+boundaryEnd))
+		ch <- s.option.Some(literal.New(rest[boundaryStart:boundaryEnd], lineNumber, offset+boundaryStart, offset+boundaryEnd))
 
 		offset += boundaryEnd
 		rest = rest[boundaryEnd:]
 	}
 
 	// Add newline.
-	res = append(res, literal.New("\n", lineNumber, inputLength, inputLength+1))
-
-	return res
+	ch <- s.option.Some(literal.New("\n", lineNumber, inputLength, inputLength+1))
 }
