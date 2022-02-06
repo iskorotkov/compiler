@@ -1,16 +1,18 @@
 package option
 
+func Ok[T any, U error](val T) Option[T, U] {
+	return Option[T, U]{ok: val}
+}
+
+func Err[T any, U error](err U) Option[T, U] {
+	return Option[T, U]{err: err}
+}
+
 type Option[T any, U error] struct {
-	Some T
-	None U
+	ok  T
+	err U
 }
 
-type Factory[T any, U error] struct{}
-
-func (f Factory[T, U]) Some(val T) Option[T, U] {
-	return Option[T, U]{Some: val}
-}
-
-func (f Factory[T, U]) None(err U) Option[T, U] {
-	return Option[T, U]{None: err}
+func (o Option[T, U]) Unwrap() (T, U) {
+	return o.ok, o.err
 }

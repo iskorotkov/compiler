@@ -18,8 +18,8 @@ var wordBoundaryRegex = regexp.MustCompile(`\W`)
 type Element = option.Option[literal.Literal, error]
 
 type Reader struct {
-	buffer int
-	option option.Factory[literal.Literal, error]
+	buffer  int
+	factory option.Factory[literal.Literal, error]
 }
 
 func New(buffer int) *Reader {
@@ -50,7 +50,7 @@ func (s Reader) Read(r io.Reader) <-chan Element {
 				break
 			}
 			if err := scanner.Err(); err != nil {
-				ch <- s.option.None(err)
+				ch <- s.factory.Err(err)
 				return
 			}
 
@@ -74,7 +74,7 @@ func (s Reader) splitLine(input string, lineNumber literal.LineNumber, ch chan<-
 		if boundary == nil {
 			if len(rest) > 0 {
 				// Add the rest of the line.
-				ch <- s.option.Some(literal.New(rest, lineNumber, offset, inputLength))
+				ch <- s.factory.Ok(literal.New(rest, lineNumber, offset, inputLength))
 			}
 
 			break
@@ -84,16 +84,16 @@ func (s Reader) splitLine(input string, lineNumber literal.LineNumber, ch chan<-
 
 		if boundaryStart > 0 {
 			// Add discovered literal.
-			ch <- s.option.Some(literal.New(rest[:boundaryStart], lineNumber, offset, offset+boundaryStart))
+			ch <- s.factory.Ok(literal.New(rest[:boundaryStart], lineNumber, offset, offset+boundaryStart))
 		}
 
 		// Add discovered boundary between two literals or other boundaries.
-		ch <- s.option.Some(literal.New(rest[boundaryStart:boundaryEnd], lineNumber, offset+boundaryStart, offset+boundaryEnd))
+		ch <- s.factory.Ok(literal.New(rest[boundaryStart:boundaryEnd], lineNumber, offset+boundaryStart, offset+boundaryEnd))
 
 		offset += boundaryEnd
 		rest = rest[boundaryEnd:]
 	}
 
 	// Add newline.
-	ch <- s.option.Some(literal.New("\n", lineNumber, inputLength, inputLength+1))
+	ch <- s.factory.Ok(literal.New("\n", lineNumber, inputLength, inputLength+1))
 }
