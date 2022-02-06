@@ -17,7 +17,7 @@ func Test(t *testing.T) {
 	type Test struct {
 		name     string
 		input    string
-		expected []reader.Element
+		expected []literal.Option
 	}
 
 	type Config struct {
@@ -31,7 +31,7 @@ func Test(t *testing.T) {
 		{
 			name:  "sequence without whitespace",
 			input: "123;,zcxc,t,,czxc,",
-			expected: []reader.Element{
+			expected: []literal.Option{
 				factory.Ok(literal.New("123", 1, 0, 3)),
 				factory.Ok(literal.New(";", 1, 3, 4)),
 				factory.Ok(literal.New(",", 1, 4, 5)),
@@ -53,7 +53,7 @@ func Test(t *testing.T) {
 		{
 			name:  "sequence with strange whitespace",
 			input: "asd\t\nsa\r\na__sd21s\v123",
-			expected: []reader.Element{
+			expected: []literal.Option{
 				factory.Ok(literal.New("asd", 1, 0, 3)),
 				factory.Ok(literal.New("\t", 1, 3, 4)),
 				factory.Ok(literal.New("\n", 1, 4, 5)),

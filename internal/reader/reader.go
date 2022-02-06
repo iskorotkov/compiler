@@ -8,18 +8,14 @@ import (
 	"regexp"
 
 	"github.com/iskorotkov/compiler/internal/data/literal"
-	"github.com/iskorotkov/compiler/internal/fn/option"
 )
 
 // wordBoundaryRegex is used for finding boundaries between two literals or other boundaries.
 // We match word boundaries so that we can extract all symbols for future analysis.
 var wordBoundaryRegex = regexp.MustCompile(`\W`)
 
-type Element = option.Option[literal.Literal, error]
-
 type Reader struct {
-	buffer  int
-	factory option.Factory[literal.Literal, error]
+	buffer int
 }
 
 func New(buffer int) *Reader {
@@ -28,7 +24,7 @@ func New(buffer int) *Reader {
 	}
 }
 
-func (s Reader) ReadFile(filename string) (<-chan Element, error) {
+func (s Reader) ReadFile(filename string) (<-chan literal.Option, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -37,8 +33,8 @@ func (s Reader) ReadFile(filename string) (<-chan Element, error) {
 	return s.Read(file), nil
 }
 
-func (s Reader) Read(r io.Reader) <-chan Element {
-	ch := make(chan Element, s.buffer)
+func (s Reader) Read(r io.Reader) <-chan literal.Option {
+	ch := make(chan literal.Option, s.buffer)
 
 	go func() {
 		defer close(ch)
@@ -50,7 +46,7 @@ func (s Reader) Read(r io.Reader) <-chan Element {
 				break
 			}
 			if err := scanner.Err(); err != nil {
-				ch <- s.factory.Err(err)
+				ch <- literal.Factory.Err(err)
 				return
 			}
 
@@ -64,7 +60,7 @@ func (s Reader) Read(r io.Reader) <-chan Element {
 	return ch
 }
 
-func (s Reader) splitLine(input string, lineNumber literal.LineNumber, ch chan<- Element) {
+func (s Reader) splitLine(input string, lineNumber literal.LineNumber, ch chan<- literal.Option) {
 	inputLength := literal.ColNumber(len(input))
 	offset := literal.ColNumber(0)
 	rest := input
@@ -74,7 +70,7 @@ func (s Reader) splitLine(input string, lineNumber literal.LineNumber, ch chan<-
 		if boundary == nil {
 			if len(rest) > 0 {
 				// Add the rest of the line.
-				ch <- s.factory.Ok(literal.New(rest, lineNumber, offset, inputLength))
+				ch <- literal.Factory.Ok(literal.New(rest, lineNumber, offset, inputLength))
 			}
 
 			break
@@ -84,16 +80,16 @@ func (s Reader) splitLine(input string, lineNumber literal.LineNumber, ch chan<-
 
 		if boundaryStart > 0 {
 			// Add discovered literal.
-			ch <- s.factory.Ok(literal.New(rest[:boundaryStart], lineNumber, offset, offset+boundaryStart))
+			ch <- literal.Factory.Ok(literal.New(rest[:boundaryStart], lineNumber, offset, offset+boundaryStart))
 		}
 
 		// Add discovered boundary between two literals or other boundaries.
-		ch <- s.factory.Ok(literal.New(rest[boundaryStart:boundaryEnd], lineNumber, offset+boundaryStart, offset+boundaryEnd))
+		ch <- literal.Factory.Ok(literal.New(rest[boundaryStart:boundaryEnd], lineNumber, offset+boundaryStart, offset+boundaryEnd))
 
 		offset += boundaryEnd
 		rest = rest[boundaryEnd:]
 	}
 
 	// Add newline.
-	ch <- s.factory.Ok(literal.New("\n", lineNumber, inputLength, inputLength+1))
+	ch <- literal.Factory.Ok(literal.New("\n", lineNumber, inputLength, inputLength+1))
 }
