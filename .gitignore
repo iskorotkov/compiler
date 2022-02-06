@@ -2,8 +2,3 @@
 .idea
 .vs
 .vscode
-docs/internal
-internal/codegen
-internal/semantic_analyzer
-internal/syntax_analyzer
-testdata
