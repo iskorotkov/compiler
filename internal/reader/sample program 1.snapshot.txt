@@ -1,0 +1,33 @@
+{ok:{Value:var Position:{Line:1 StartCol:0 EndCol:3}} err:<nil>}
+{ok:{Value:  Position:{Line:1 StartCol:3 EndCol:4}} err:<nil>}
+{ok:{Value:i Position:{Line:1 StartCol:4 EndCol:5}} err:<nil>}
+{ok:{Value:, Position:{Line:1 StartCol:5 EndCol:6}} err:<nil>}
+{ok:{Value:j Position:{Line:1 StartCol:6 EndCol:7}} err:<nil>}
+{ok:{Value:: Position:{Line:1 StartCol:7 EndCol:8}} err:<nil>}
+{ok:{Value:integer Position:{Line:1 StartCol:8 EndCol:15}} err:<nil>}
+{ok:{Value:; Position:{Line:1 StartCol:15 EndCol:16}} err:<nil>}
+{ok:{Value:
+ Position:{Line:1 StartCol:16 EndCol:17}} err:<nil>}
+{ok:{Value:begin Position:{Line:2 StartCol:0 EndCol:5}} err:<nil>}
+{ok:{Value:
+ Position:{Line:2 StartCol:5 EndCol:6}} err:<nil>}
+{ok:{Value:i Position:{Line:3 StartCol:0 EndCol:1}} err:<nil>}
+{ok:{Value:: Position:{Line:3 StartCol:1 EndCol:2}} err:<nil>}
+{ok:{Value:= Position:{Line:3 StartCol:2 EndCol:3}} err:<nil>}
+{ok:{Value:1 Position:{Line:3 StartCol:3 EndCol:4}} err:<nil>}
+{ok:{Value:; Position:{Line:3 StartCol:4 EndCol:5}} err:<nil>}
+{ok:{Value:
+ Position:{Line:3 StartCol:5 EndCol:6}} err:<nil>}
+{ok:{Value:j Position:{Line:4 StartCol:0 EndCol:1}} err:<nil>}
+{ok:{Value:: Position:{Line:4 StartCol:1 EndCol:2}} err:<nil>}
+{ok:{Value:= Position:{Line:4 StartCol:2 EndCol:3}} err:<nil>}
+{ok:{Value:i Position:{Line:4 StartCol:3 EndCol:4}} err:<nil>}
+{ok:{Value:+ Position:{Line:4 StartCol:4 EndCol:5}} err:<nil>}
+{ok:{Value:2 Position:{Line:4 StartCol:5 EndCol:6}} err:<nil>}
+{ok:{Value:; Position:{Line:4 StartCol:6 EndCol:7}} err:<nil>}
+{ok:{Value:
+ Position:{Line:4 StartCol:7 EndCol:8}} err:<nil>}
+{ok:{Value:end Position:{Line:5 StartCol:0 EndCol:3}} err:<nil>}
+{ok:{Value:. Position:{Line:5 StartCol:3 EndCol:4}} err:<nil>}
+{ok:{Value:
+ Position:{Line:5 StartCol:4 EndCol:5}} err:<nil>}

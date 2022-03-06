@@ -9,9 +9,11 @@ import (
 	"github.com/iskorotkov/compiler/internal/channel"
 	"github.com/iskorotkov/compiler/internal/data/literal"
 	"github.com/iskorotkov/compiler/internal/reader"
+	"github.com/iskorotkov/compiler/internal/snapshot"
+	"github.com/iskorotkov/compiler/testdata"
 )
 
-func Test(t *testing.T) {
+func TestReader_Read(t *testing.T) {
 	t.Parallel()
 
 	type Test struct {
@@ -95,6 +97,46 @@ func Test(t *testing.T) {
 					assert.Equal(t, test.expected, actual)
 				})
 			}
+		})
+	}
+}
+
+func TestReader_ReadWithSnapshots(t *testing.T) {
+	t.Parallel()
+
+	type Test struct {
+		name  string
+		input string
+	}
+
+	tests := []Test{
+		{
+			name:  "sample program 1",
+			input: testdata.File1,
+		},
+		{
+			name:  "sample program 2",
+			input: testdata.File2,
+		},
+	}
+
+	r := reader.New(0)
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			actual := channel.ToSlice(r.Read(strings.NewReader(test.input)))
+			s := snapshot.NewSlice(actual)
+
+			expected := snapshot.Load(test.name)
+			if expected == "" {
+				s.Save(test.name)
+				return
+			}
+
+			assert.Equal(t, expected, s)
 		})
 	}
 }
