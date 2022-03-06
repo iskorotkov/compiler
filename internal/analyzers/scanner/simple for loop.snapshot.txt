@@ -1,0 +1,11 @@
+{ok:{Type:3 ID:31 Literal:{Value:for Position:{Line:0 StartCol:0 EndCol:0}} Value:<nil>} err:<nil>}
+{ok:{Type:2 ID:0 Literal:{Value:i Position:{Line:0 StartCol:0 EndCol:0}} Value:<nil>} err:<nil>}
+{ok:{Type:5 ID:28 Literal:{Value::= Position:{Line:0 StartCol:0 EndCol:0}} Value:<nil>} err:<nil>}
+{ok:{Type:1 ID:0 Literal:{Value:1 Position:{Line:0 StartCol:0 EndCol:0}} Value:<nil>} err:<nil>}
+{ok:{Type:3 ID:78 Literal:{Value:to Position:{Line:0 StartCol:0 EndCol:0}} Value:<nil>} err:<nil>}
+{ok:{Type:1 ID:0 Literal:{Value:10 Position:{Line:0 StartCol:0 EndCol:0}} Value:<nil>} err:<nil>}
+{ok:{Type:3 ID:21 Literal:{Value:do Position:{Line:0 StartCol:0 EndCol:0}} Value:<nil>} err:<nil>}
+{ok:{Type:2 ID:0 Literal:{Value:writeln Position:{Line:0 StartCol:0 EndCol:0}} Value:<nil>} err:<nil>}
+{ok:{Type:4 ID:5 Literal:{Value:( Position:{Line:0 StartCol:0 EndCol:0}} Value:<nil>} err:<nil>}
+{ok:{Type:2 ID:0 Literal:{Value:i Position:{Line:0 StartCol:0 EndCol:0}} Value:<nil>} err:<nil>}
+{ok:{Type:4 ID:6 Literal:{Value:) Position:{Line:0 StartCol:0 EndCol:0}} Value:<nil>} err:<nil>}
