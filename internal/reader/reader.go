@@ -10,9 +10,13 @@ import (
 	"github.com/iskorotkov/compiler/internal/data/literal"
 )
 
-// wordBoundaryRegex is used for finding boundaries between two literals or other boundaries.
-// We match word boundaries so that we can extract all symbols for future analysis.
-var wordBoundaryRegex = regexp.MustCompile(`\W`)
+var (
+	// wordBoundaryRegex is used for finding boundaries between two literals or other boundaries.
+	// We match word boundaries so that we can extract all symbols for future analysis.
+	wordBoundaryRegex = regexp.MustCompile(`\W`)
+	// complexOperatorRegex matches complex operators that consist of 2 characters.
+	complexOperatorRegex = regexp.MustCompile(`[<>][<>=]|:=`)
+)
 
 type Reader struct {
 	buffer int
@@ -77,6 +81,11 @@ func (s Reader) splitLine(input string, lineNumber literal.LineNumber, ch chan<-
 		}
 
 		boundaryStart, boundaryEnd := literal.ColNumber(boundary[0]), literal.ColNumber(boundary[1])
+
+		complexBoundary := complexOperatorRegex.FindStringIndex(rest)
+		if complexBoundary != nil && boundary[0] == complexBoundary[0] {
+			boundaryEnd = literal.ColNumber(complexBoundary[1])
+		}
 
 		if boundaryStart > 0 {
 			// Add discovered literal.

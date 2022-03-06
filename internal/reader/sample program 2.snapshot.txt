@@ -1,7 +1,6 @@
 {ok:{Value:x Position:{Line:1 StartCol:0 EndCol:1}} err:<nil>}
 {ok:{Value:  Position:{Line:1 StartCol:1 EndCol:2}} err:<nil>}
-{ok:{Value:: Position:{Line:1 StartCol:2 EndCol:3}} err:<nil>}
-{ok:{Value:= Position:{Line:1 StartCol:3 EndCol:4}} err:<nil>}
+{ok:{Value::= Position:{Line:1 StartCol:2 EndCol:4}} err:<nil>}
 {ok:{Value:  Position:{Line:1 StartCol:4 EndCol:5}} err:<nil>}
 {ok:{Value:1 Position:{Line:1 StartCol:5 EndCol:6}} err:<nil>}
 {ok:{Value:  Position:{Line:1 StartCol:6 EndCol:7}} err:<nil>}
