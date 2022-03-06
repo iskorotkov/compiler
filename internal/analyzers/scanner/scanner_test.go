@@ -24,12 +24,12 @@ func TestScanner_Scan(t *testing.T) {
 		},
 	}
 
+	sc := scanner.New(0)
+
 	for _, test := range tests {
 		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-
-			sc := scanner.New(1)
 
 			actual := channel.ToSlice(sc.Scan(channel.FromSlice(test.input)))
 			s := snapshot.NewSlice(actual)

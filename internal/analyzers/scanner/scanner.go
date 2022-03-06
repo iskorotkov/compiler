@@ -2,7 +2,9 @@ package scanner
 
 import (
 	"fmt"
+	"log"
 	"regexp"
+	"strings"
 
 	"github.com/iskorotkov/compiler/internal/constants"
 	"github.com/iskorotkov/compiler/internal/data/literal"
@@ -39,7 +41,9 @@ func (l Scanner) Scan(input <-chan literal.Option) <-chan token.Option {
 				continue
 			}
 
-			if id := constants.Keywords[lit.Value]; id != constants.None {
+			if len(strings.TrimSpace(lit.Value)) == 0 {
+				log.Println("skipping literal as it contains whitespace only")
+			} else if id := constants.Keywords[lit.Value]; id != constants.None {
 				ch <- token.Ok(token.New(token.TypeKeyword, id, lit, nil))
 			} else if id := constants.Operators[lit.Value]; id != constants.None {
 				ch <- token.Ok(token.New(token.TypeOperator, id, lit, nil))
