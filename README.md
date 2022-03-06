@@ -24,10 +24,10 @@ go run cmd/compiler/main.go
 
 На данный момент предлагается такой набор модулей:
 
-[Reader (модуль ввода)](#reader) => 
-[Scanner (сканер, лексический анализатор)](#scanner) => 
-[Syntax analyzer (синтаксический анализатор)](#syntax-analyzer) => 
-[Semantic analyzer (семантический анализатор)](#semantic-analyzer) => 
+[Reader (модуль ввода)](#reader) =>
+[Scanner (сканер, лексический анализатор)](#scanner) =>
+[Syntax analyzer (синтаксический анализатор)](#syntax-analyzer) =>
+[Semantic analyzer (семантический анализатор)](#semantic-analyzer) =>
 [Code generator (генератор кода)](#code-generator).
 
 ### Обработка ошибок
