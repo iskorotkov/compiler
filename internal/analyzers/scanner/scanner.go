@@ -43,16 +43,16 @@ func (l Scanner) Scan(input <-chan literal.Option) <-chan token.Option {
 
 			if len(strings.TrimSpace(lit.Value)) == 0 {
 				log.Println("skipping literal as it contains whitespace only")
-			} else if id := constants.Keywords[lit.Value]; id != constants.None {
+			} else if id, ok := constants.Keywords[lit.Value]; ok {
 				ch <- token.Ok(token.New(token.TypeKeyword, id, lit, nil))
-			} else if id := constants.Operators[lit.Value]; id != constants.None {
+			} else if id, ok := constants.Operators[lit.Value]; ok {
 				ch <- token.Ok(token.New(token.TypeOperator, id, lit, nil))
-			} else if id := constants.Punctuation[lit.Value]; id != constants.None {
+			} else if id, ok := constants.Punctuation[lit.Value]; ok {
 				ch <- token.Ok(token.New(token.TypePunctuation, id, lit, nil))
-			} else if intConstantRegex.Match([]byte(lit.Value)) || doubleConstantRegex.Match([]byte(lit.Value)) || boolConstantRegex.Match([]byte(lit.Value)) {
+			} else if intConstantRegex.MatchString(lit.Value) || doubleConstantRegex.MatchString(lit.Value) || boolConstantRegex.MatchString(lit.Value) {
 				// TODO: Pass value to next analyzers.
 				ch <- token.Ok(token.New(token.TypeConstant, 0, lit, nil))
-			} else if userIdentifierRegex.Match([]byte(lit.Value)) {
+			} else if userIdentifierRegex.MatchString(lit.Value) {
 				ch <- token.Ok(token.New(token.TypeUserIdentifier, 0, lit, nil))
 			} else {
 				ch <- token.Err(fmt.Errorf("unknown token %s at position %v", lit.Value, lit.Position))
