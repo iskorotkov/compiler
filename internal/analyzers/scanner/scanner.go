@@ -47,9 +47,9 @@ func (l Scanner) Scan(input <-chan literal.Option) <-chan token.Option {
 				ch <- token.Ok(token.New(token.TypePunctuation, id, lit, nil))
 			} else if intConstantRegex.Match([]byte(lit.Value)) || doubleConstantRegex.Match([]byte(lit.Value)) || boolConstantRegex.Match([]byte(lit.Value)) {
 				// TODO: Pass value to next analyzers.
-				ch <- token.Ok(token.New(token.TypeConstant, id, lit, nil))
+				ch <- token.Ok(token.New(token.TypeConstant, 0, lit, nil))
 			} else if userIdentifierRegex.Match([]byte(lit.Value)) {
-				ch <- token.Ok(token.New(token.TypeUserIdentifier, id, lit, nil))
+				ch <- token.Ok(token.New(token.TypeUserIdentifier, 0, lit, nil))
 			} else {
 				ch <- token.Err(fmt.Errorf("unknown token %s at position %v", lit.Value, lit.Position))
 			}
