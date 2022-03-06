@@ -41,24 +41,50 @@ func (l Scanner) Scan(input <-chan literal.Option) <-chan token.Option {
 				continue
 			}
 
-			if len(strings.TrimSpace(lit.Value)) == 0 {
-				log.Println("skipping literal as it contains whitespace only")
-			} else if id, ok := constants.Keywords[lit.Value]; ok {
-				ch <- token.Ok(token.New(token.TypeKeyword, id, lit, nil))
-			} else if id, ok := constants.Operators[lit.Value]; ok {
-				ch <- token.Ok(token.New(token.TypeOperator, id, lit, nil))
-			} else if id, ok := constants.Punctuation[lit.Value]; ok {
-				ch <- token.Ok(token.New(token.TypePunctuation, id, lit, nil))
-			} else if intConstantRegex.MatchString(lit.Value) || doubleConstantRegex.MatchString(lit.Value) || boolConstantRegex.MatchString(lit.Value) {
-				// TODO: Pass value to next analyzers.
-				ch <- token.Ok(token.New(token.TypeConstant, 0, lit, nil))
-			} else if userIdentifierRegex.MatchString(lit.Value) {
-				ch <- token.Ok(token.New(token.TypeUserIdentifier, 0, lit, nil))
-			} else {
-				ch <- token.Err(fmt.Errorf("unknown token %s at position %v", lit.Value, lit.Position))
-			}
+			addTypedToken(lit, ch)
 		}
 	}()
 
 	return ch
+}
+
+func addTypedToken(lit literal.Literal, ch chan<- token.Option) {
+	// Whitespace only - skip it.
+	if len(strings.TrimSpace(lit.Value)) == 0 {
+		log.Println("skipping literal as it contains whitespace only")
+		return
+	}
+
+	// Keywords.
+	if id, ok := constants.Keywords[lit.Value]; ok {
+		ch <- token.Ok(token.New(token.TypeKeyword, id, lit, nil))
+		return
+	}
+
+	// Operators.
+	if id, ok := constants.Operators[lit.Value]; ok {
+		ch <- token.Ok(token.New(token.TypeOperator, id, lit, nil))
+		return
+	}
+
+	// Punctuation marks.
+	if id, ok := constants.Punctuation[lit.Value]; ok {
+		ch <- token.Ok(token.New(token.TypePunctuation, id, lit, nil))
+		return
+	}
+
+	// Constants.
+	if intConstantRegex.MatchString(lit.Value) || doubleConstantRegex.MatchString(lit.Value) || boolConstantRegex.MatchString(lit.Value) {
+		// TODO: Pass value to next analyzers.
+		ch <- token.Ok(token.New(token.TypeConstant, 0, lit, nil))
+		return
+	}
+
+	// User identifiers.
+	if userIdentifierRegex.MatchString(lit.Value) {
+		ch <- token.Ok(token.New(token.TypeUserIdentifier, 0, lit, nil))
+		return
+	}
+
+	ch <- token.Err(fmt.Errorf("unknown token %s at position %v", lit.Value, lit.Position))
 }
