@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/iskorotkov/compiler/internal/channel"
 	"github.com/iskorotkov/compiler/internal/data/literal"
-	"github.com/iskorotkov/compiler/internal/fn/option"
 	"github.com/iskorotkov/compiler/internal/reader"
 )
 
@@ -25,24 +25,22 @@ func Test(t *testing.T) {
 		bufferSize int
 	}
 
-	factory := option.Factory[literal.Literal, error]{}
-
 	tests := []Test{
 		{
 			name:  "sequence without whitespace",
 			input: "123;,zcxc,t,,czxc,",
 			expected: []literal.Option{
-				factory.Ok(literal.New("123", 1, 0, 3)),
-				factory.Ok(literal.New(";", 1, 3, 4)),
-				factory.Ok(literal.New(",", 1, 4, 5)),
-				factory.Ok(literal.New("zcxc", 1, 5, 9)),
-				factory.Ok(literal.New(",", 1, 9, 10)),
-				factory.Ok(literal.New("t", 1, 10, 11)),
-				factory.Ok(literal.New(",", 1, 11, 12)),
-				factory.Ok(literal.New(",", 1, 12, 13)),
-				factory.Ok(literal.New("czxc", 1, 13, 17)),
-				factory.Ok(literal.New(",", 1, 17, 18)),
-				factory.Ok(literal.New("\n", 1, 18, 19)),
+				literal.Ok(literal.New("123", 1, 0, 3)),
+				literal.Ok(literal.New(";", 1, 3, 4)),
+				literal.Ok(literal.New(",", 1, 4, 5)),
+				literal.Ok(literal.New("zcxc", 1, 5, 9)),
+				literal.Ok(literal.New(",", 1, 9, 10)),
+				literal.Ok(literal.New("t", 1, 10, 11)),
+				literal.Ok(literal.New(",", 1, 11, 12)),
+				literal.Ok(literal.New(",", 1, 12, 13)),
+				literal.Ok(literal.New("czxc", 1, 13, 17)),
+				literal.Ok(literal.New(",", 1, 17, 18)),
+				literal.Ok(literal.New("\n", 1, 18, 19)),
 			},
 		},
 		{
@@ -54,15 +52,15 @@ func Test(t *testing.T) {
 			name:  "sequence with strange whitespace",
 			input: "asd\t\nsa\r\na__sd21s\v123",
 			expected: []literal.Option{
-				factory.Ok(literal.New("asd", 1, 0, 3)),
-				factory.Ok(literal.New("\t", 1, 3, 4)),
-				factory.Ok(literal.New("\n", 1, 4, 5)),
-				factory.Ok(literal.New("sa", 2, 0, 2)),
-				factory.Ok(literal.New("\n", 2, 2, 3)),
-				factory.Ok(literal.New("a__sd21s", 3, 0, 8)),
-				factory.Ok(literal.New("\v", 3, 8, 9)),
-				factory.Ok(literal.New("123", 3, 9, 12)),
-				factory.Ok(literal.New("\n", 3, 12, 13)),
+				literal.Ok(literal.New("asd", 1, 0, 3)),
+				literal.Ok(literal.New("\t", 1, 3, 4)),
+				literal.Ok(literal.New("\n", 1, 4, 5)),
+				literal.Ok(literal.New("sa", 2, 0, 2)),
+				literal.Ok(literal.New("\n", 2, 2, 3)),
+				literal.Ok(literal.New("a__sd21s", 3, 0, 8)),
+				literal.Ok(literal.New("\v", 3, 8, 9)),
+				literal.Ok(literal.New("123", 3, 9, 12)),
+				literal.Ok(literal.New("\n", 3, 12, 13)),
 			},
 		},
 	}
@@ -83,22 +81,17 @@ func Test(t *testing.T) {
 	}
 
 	for _, config := range configs {
-		r := reader.New(config.bufferSize)
-
+		config := config
 		t.Run(config.name, func(t *testing.T) {
 			t.Parallel()
 
+			r := reader.New(config.bufferSize)
 			for _, test := range tests {
 				test := test
-
 				t.Run(test.name, func(t *testing.T) {
 					t.Parallel()
 
-					var actual []option.Option[literal.Literal, error]
-					for value := range r.Read(strings.NewReader(test.input)) {
-						actual = append(actual, value)
-					}
-
+					actual := channel.ToSlice(r.Read(strings.NewReader(test.input)))
 					assert.Equal(t, test.expected, actual)
 				})
 			}
