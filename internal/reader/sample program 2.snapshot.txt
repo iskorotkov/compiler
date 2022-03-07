@@ -1,12 +1,12 @@
-{ok:{Value:x Position:{Line:1 StartCol:0 EndCol:1}} err:<nil>}
-{ok:{Value:  Position:{Line:1 StartCol:1 EndCol:2}} err:<nil>}
-{ok:{Value::= Position:{Line:1 StartCol:2 EndCol:4}} err:<nil>}
-{ok:{Value:  Position:{Line:1 StartCol:4 EndCol:5}} err:<nil>}
-{ok:{Value:1 Position:{Line:1 StartCol:5 EndCol:6}} err:<nil>}
-{ok:{Value:  Position:{Line:1 StartCol:6 EndCol:7}} err:<nil>}
-{ok:{Value:+ Position:{Line:1 StartCol:7 EndCol:8}} err:<nil>}
-{ok:{Value:  Position:{Line:1 StartCol:8 EndCol:9}} err:<nil>}
-{ok:{Value:y Position:{Line:1 StartCol:9 EndCol:10}} err:<nil>}
-{ok:{Value:; Position:{Line:1 StartCol:10 EndCol:11}} err:<nil>}
+{ok:{Value:x Position:{Line:1 StartCol:1 EndCol:2}} err:<nil>}
+{ok:{Value:  Position:{Line:1 StartCol:2 EndCol:3}} err:<nil>}
+{ok:{Value::= Position:{Line:1 StartCol:3 EndCol:5}} err:<nil>}
+{ok:{Value:  Position:{Line:1 StartCol:5 EndCol:6}} err:<nil>}
+{ok:{Value:1 Position:{Line:1 StartCol:6 EndCol:7}} err:<nil>}
+{ok:{Value:  Position:{Line:1 StartCol:7 EndCol:8}} err:<nil>}
+{ok:{Value:+ Position:{Line:1 StartCol:8 EndCol:9}} err:<nil>}
+{ok:{Value:  Position:{Line:1 StartCol:9 EndCol:10}} err:<nil>}
+{ok:{Value:y Position:{Line:1 StartCol:10 EndCol:11}} err:<nil>}
+{ok:{Value:; Position:{Line:1 StartCol:11 EndCol:12}} err:<nil>}
 {ok:{Value:
- Position:{Line:1 StartCol:11 EndCol:12}} err:<nil>}
+ Position:{Line:1 StartCol:12 EndCol:13}} err:<nil>}
