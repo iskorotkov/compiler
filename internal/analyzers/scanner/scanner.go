@@ -14,7 +14,7 @@ import (
 var (
 	intConstantRegex    = regexp.MustCompile(`^\d+$`)
 	doubleConstantRegex = regexp.MustCompile(`^\d+\.\d+$`)
-	boolConstantRegex   = regexp.MustCompile(`^true|false$`)
+	boolConstantRegex   = regexp.MustCompile(`^true$|^false$`)
 	userIdentifierRegex = regexp.MustCompile(`^(?i)[a-z_]\w*$`)
 )
 
