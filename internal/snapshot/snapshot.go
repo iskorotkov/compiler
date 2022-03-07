@@ -3,15 +3,14 @@ package snapshot
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 )
 
-type Snapshot string
+type Snapshot []string
 
 func New(value interface{}) Snapshot {
-	return Snapshot(fmt.Sprintf("%v", value))
+	return Snapshot([]string{fmt.Sprintf("%v", value)})
 }
 
 func NewSlice[T any](items []T) Snapshot {
@@ -20,7 +19,7 @@ func NewSlice[T any](items []T) Snapshot {
 		s = append(s, fmt.Sprintf("%v", item))
 	}
 
-	return Snapshot(strings.Join(s, "\n"))
+	return Snapshot(s)
 }
 
 func Load(filename string) Snapshot {
@@ -31,22 +30,20 @@ func Load(filename string) Snapshot {
 		panic(err)
 	}
 
-	return Snapshot(b)
+	s := strings.Split(string(b), "\n")
+
+	return Snapshot(s)
 }
 
-func (s Snapshot) Equal(value interface{}) bool {
-	if s == "" {
-		log.Println("no snapshot available")
-		return true
-	}
-
-	other := New(value)
-	return s == other
+func (s Snapshot) Available() bool {
+	return s != nil
 }
 
 func (s Snapshot) Save(filename string) {
 	filename = fmt.Sprintf("%s.%s", filename, "snapshot.txt")
-	if err := os.WriteFile(filename, []byte(s), 0744); err != nil {
+	content := []byte(strings.Join(s, "\n"))
+
+	if err := os.WriteFile(filename, content, 0744); err != nil {
 		panic(err)
 	}
 }

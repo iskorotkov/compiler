@@ -131,7 +131,7 @@ func TestReader_ReadWithSnapshots(t *testing.T) {
 			s := snapshot.NewSlice(actual)
 
 			expected := snapshot.Load(test.name)
-			if expected == "" {
+			if !expected.Available() {
 				s.Save(test.name)
 				return
 			}
