@@ -1,6 +1,7 @@
 package token
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/iskorotkov/compiler/internal/constants"
@@ -26,8 +27,6 @@ type Token struct {
 	Value   *reflect.Value
 }
 
-type Option = option.Option[Token, error]
-
 func New(tokenType Type, id constants.ID, lit literal.Literal, value *reflect.Value) Token {
 	return Token{
 		Type:    tokenType,
@@ -36,6 +35,12 @@ func New(tokenType Type, id constants.ID, lit literal.Literal, value *reflect.Va
 		Value:   value,
 	}
 }
+
+func (t Token) String() string {
+	return fmt.Sprintf("%d.%d: %v", t.Type, t.ID, t.Literal)
+}
+
+type Option = option.Option[Token, error]
 
 func Ok(token Token) Option {
 	return option.Ok[Token, error](token)

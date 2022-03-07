@@ -1,6 +1,8 @@
 package literal
 
 import (
+	"fmt"
+
 	"github.com/iskorotkov/compiler/internal/fn/option"
 )
 
@@ -18,6 +20,10 @@ func New(value string, line LineNumber, start, end ColNumber) Literal {
 			EndCol:   end,
 		},
 	}
+}
+
+func (l Literal) String() string {
+	return fmt.Sprintf("%q at %v", l.Value, l.Position)
 }
 
 type Option = option.Option[Literal, error]

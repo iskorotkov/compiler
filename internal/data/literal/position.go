@@ -13,5 +13,9 @@ type Position struct {
 }
 
 func (p Position) String() string {
+	if p.EndCol == p.StartCol+1 {
+		return fmt.Sprintf("%d:%d", p.Line, p.StartCol)
+	}
+
 	return fmt.Sprintf("%d:%d-%d", p.Line, p.StartCol, p.EndCol)
 }

@@ -1,5 +1,10 @@
 package option
 
+import (
+	"fmt"
+	"reflect"
+)
+
 type Option[T any, U error] struct {
 	ok  T
 	err U
@@ -7,6 +12,14 @@ type Option[T any, U error] struct {
 
 func (o Option[T, U]) Unwrap() (T, U) {
 	return o.ok, o.err
+}
+
+func (o Option[T, U]) String() string {
+	if reflect.ValueOf(&o).Elem().FieldByName("err").IsNil() {
+		return fmt.Sprintf("ok: %v", o.ok)
+	}
+
+	return fmt.Sprintf("err: %v", o.err)
 }
 
 func Ok[T any, U error](val T) Option[T, U] {

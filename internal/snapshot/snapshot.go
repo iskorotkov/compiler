@@ -11,13 +11,13 @@ import (
 type Snapshot string
 
 func New(value interface{}) Snapshot {
-	return Snapshot(fmt.Sprintf("%+v", value))
+	return Snapshot(fmt.Sprintf("%v", value))
 }
 
 func NewSlice[T any](items []T) Snapshot {
 	var s []string
 	for _, item := range items {
-		s = append(s, fmt.Sprintf("%+v", item))
+		s = append(s, fmt.Sprintf("%v", item))
 	}
 
 	return Snapshot(strings.Join(s, "\n"))
