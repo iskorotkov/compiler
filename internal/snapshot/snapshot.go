@@ -10,7 +10,7 @@ import (
 type Snapshot []string
 
 func New(value interface{}) Snapshot {
-	return Snapshot([]string{fmt.Sprintf("%v", value)})
+	return []string{fmt.Sprintf("%v", value)}
 }
 
 func NewSlice[T any](items []T) Snapshot {
@@ -19,7 +19,7 @@ func NewSlice[T any](items []T) Snapshot {
 		s = append(s, fmt.Sprintf("%v", item))
 	}
 
-	return Snapshot(s)
+	return s
 }
 
 func Load(filename string) Snapshot {
@@ -30,13 +30,17 @@ func Load(filename string) Snapshot {
 		panic(err)
 	}
 
+	if len(b) == 0 {
+		return nil
+	}
+
 	s := strings.Split(string(b), "\n")
 
-	return Snapshot(s)
+	return s
 }
 
 func (s Snapshot) Available() bool {
-	return s != nil
+	return len(s) != 0
 }
 
 func (s Snapshot) Save(filename string) {
