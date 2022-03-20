@@ -4,11 +4,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/iskorotkov/compiler/internal/analyzers/scanner"
 	"github.com/iskorotkov/compiler/internal/channel"
 	"github.com/iskorotkov/compiler/internal/data/literal"
 	"github.com/iskorotkov/compiler/internal/snapshot"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestScanner_Scan(t *testing.T) {

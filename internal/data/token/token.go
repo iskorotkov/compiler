@@ -2,42 +2,25 @@ package token
 
 import (
 	"fmt"
-	"reflect"
 
-	"github.com/iskorotkov/compiler/internal/constants"
 	"github.com/iskorotkov/compiler/internal/data/literal"
 	"github.com/iskorotkov/compiler/internal/fn/option"
 )
 
-const (
-	TypeUnknown Type = iota
-	TypeConstant
-	TypeUserIdentifier
-	TypeKeyword
-	TypePunctuation
-	TypeOperator
-)
-
-type Type int
-
 type Token struct {
-	Type    Type
-	ID      constants.ID
-	Literal literal.Literal
-	Value   *reflect.Value
+	ID ID
+	literal.Literal
 }
 
-func New(tokenType Type, id constants.ID, lit literal.Literal, value *reflect.Value) Token {
+func New(id ID, lit literal.Literal) Token {
 	return Token{
-		Type:    tokenType,
 		ID:      id,
 		Literal: lit,
-		Value:   value,
 	}
 }
 
 func (t Token) String() string {
-	return fmt.Sprintf("%d.%d: %v", t.Type, t.ID, t.Literal)
+	return fmt.Sprintf("%v: %v", t.ID, t.Literal)
 }
 
 type Option = option.Option[Token, error]

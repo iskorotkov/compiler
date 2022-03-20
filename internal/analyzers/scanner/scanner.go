@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/iskorotkov/compiler/internal/constants"
 	"github.com/iskorotkov/compiler/internal/data/literal"
 	"github.com/iskorotkov/compiler/internal/data/token"
 )
@@ -55,34 +54,22 @@ func addTypedToken(lit literal.Literal, ch chan<- token.Option) {
 		return
 	}
 
-	// Keywords.
-	if id, ok := constants.Keywords[lit.Value]; ok {
-		ch <- token.Ok(token.New(token.TypeKeyword, id, lit, nil))
-		return
-	}
-
-	// Operators.
-	if id, ok := constants.Operators[lit.Value]; ok {
-		ch <- token.Ok(token.New(token.TypeOperator, id, lit, nil))
-		return
-	}
-
-	// Punctuation marks.
-	if id, ok := constants.Punctuation[lit.Value]; ok {
-		ch <- token.Ok(token.New(token.TypePunctuation, id, lit, nil))
+	id := token.GetID(lit.Value)
+	if id != token.Unknown {
+		ch <- token.Ok(token.New(id, lit))
 		return
 	}
 
 	// Constants.
 	if intConstantRegex.MatchString(lit.Value) || doubleConstantRegex.MatchString(lit.Value) || boolConstantRegex.MatchString(lit.Value) {
 		// TODO: Pass value to next analyzers.
-		ch <- token.Ok(token.New(token.TypeConstant, 0, lit, nil))
+		ch <- token.Ok(token.New(token.Literal, lit))
 		return
 	}
 
 	// User identifiers.
 	if userIdentifierRegex.MatchString(lit.Value) {
-		ch <- token.Ok(token.New(token.TypeUserIdentifier, 0, lit, nil))
+		ch <- token.Ok(token.New(token.UserDefined, lit))
 		return
 	}
 

@@ -1,11 +1,11 @@
-ok: 3.31: "for" at 0:0-0
-ok: 2.0: "i" at 0:0-0
-ok: 5.28: ":=" at 0:0-0
-ok: 1.0: "1" at 0:0-0
-ok: 3.78: "to" at 0:0-0
-ok: 1.0: "10" at 0:0-0
-ok: 3.21: "do" at 0:0-0
-ok: 2.0: "writeln" at 0:0-0
-ok: 4.5: "(" at 0:0-0
-ok: 2.0: "i" at 0:0-0
-ok: 4.6: ")" at 0:0-0
+ok: for: "for" at 0:0-0
+ok: <user defined>: "i" at 0:0-0
+ok: :=: ":=" at 0:0-0
+ok: <literal>: "1" at 0:0-0
+ok: to: "to" at 0:0-0
+ok: <literal>: "10" at 0:0-0
+ok: do: "do" at 0:0-0
+ok: <user defined>: "writeln" at 0:0-0
+ok: (: "(" at 0:0-0
+ok: <user defined>: "i" at 0:0-0
+ok: ): ")" at 0:0-0
