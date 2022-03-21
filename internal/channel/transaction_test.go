@@ -98,18 +98,24 @@ func TestNestedTransactions(t *testing.T) {
 	assert.True(t, ch.Open())
 
 	ch = ch.StartTx()
+
 	assert.Equal(t, 2, ch.Read())
 	assert.True(t, ch.Open())
 
 	ch = ch.StartTx()
+
 	assert.Equal(t, 3, ch.Read())
 	assert.False(t, ch.Open())
 
 	ch.Rollback()
+
 	assert.Equal(t, 3, ch.Read())
 	assert.False(t, ch.Open())
 
 	ch.Rollback()
+
+	ch = ch.StartTx()
+
 	assert.Equal(t, 2, ch.Read())
 	assert.True(t, ch.Open())
 
@@ -117,5 +123,10 @@ func TestNestedTransactions(t *testing.T) {
 	assert.False(t, ch.Open())
 
 	ch.Commit()
+	ch.Rollback()
+	assert.False(t, ch.Open())
+
+	ch.Commit()
+	ch.Rollback()
 	assert.False(t, ch.Open())
 }

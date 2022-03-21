@@ -24,7 +24,7 @@ func (c *TransactionChannel[T]) Commit() {
 	c.m.Lock()
 	defer c.m.Unlock()
 
-	c.transactions = c.transactions[:len(c.transactions)-1]
+	c.transactions[len(c.transactions)-1] = nil
 }
 
 // Rollback adds values from ongoing transaction to the rollback list and starts a new transaction.
