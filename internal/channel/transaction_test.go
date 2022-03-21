@@ -89,3 +89,33 @@ func TestCommitRollback(t *testing.T) {
 	assert.Equal(t, 3, ch.Read())
 	assert.False(t, ch.Open())
 }
+
+func TestNestedTransactions(t *testing.T) {
+	t.Parallel()
+
+	ch := channel.NewTransactionChannel(channel.FromSlice([]int{1, 2, 3}))
+	assert.Equal(t, 1, ch.Read())
+	assert.True(t, ch.Open())
+
+	ch = ch.StartTx()
+	assert.Equal(t, 2, ch.Read())
+	assert.True(t, ch.Open())
+
+	ch = ch.StartTx()
+	assert.Equal(t, 3, ch.Read())
+	assert.False(t, ch.Open())
+
+	ch.Rollback()
+	assert.Equal(t, 3, ch.Read())
+	assert.False(t, ch.Open())
+
+	ch.Rollback()
+	assert.Equal(t, 2, ch.Read())
+	assert.True(t, ch.Open())
+
+	assert.Equal(t, 3, ch.Read())
+	assert.False(t, ch.Open())
+
+	ch.Commit()
+	assert.False(t, ch.Open())
+}

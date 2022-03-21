@@ -7,10 +7,10 @@ import (
 type TransactionChannel[T any] struct {
 	sourceCh <-chan T
 
-	transaction []T
-	rollback    []T
-	closed      bool
-	m           sync.Mutex
+	transactions [][]T
+	rollback     []T
+	closed       bool
+	m            sync.Mutex
 }
 
 func NewTransactionChannel[T any](ch <-chan T) *TransactionChannel[T] {
@@ -24,7 +24,7 @@ func (c *TransactionChannel[T]) Commit() {
 	c.m.Lock()
 	defer c.m.Unlock()
 
-	c.transaction = nil
+	c.transactions = c.transactions[:len(c.transactions)-1]
 }
 
 // Rollback adds values from ongoing transaction to the rollback list and starts a new transaction.
@@ -32,8 +32,12 @@ func (c *TransactionChannel[T]) Rollback() {
 	c.m.Lock()
 	defer c.m.Unlock()
 
-	c.rollback = append(c.transaction, c.rollback...)
-	c.transaction = nil
+	if len(c.transactions) == 0 {
+		return
+	}
+
+	c.rollback = append(c.transactions[len(c.transactions)-1], c.rollback...)
+	c.transactions = c.transactions[:len(c.transactions)-1]
 
 	if len(c.rollback) > 0 {
 		c.closed = false
@@ -62,7 +66,11 @@ func (c *TransactionChannel[T]) Read() T {
 		}
 	}
 
-	c.transaction = append(c.transaction, nextElement)
+	if len(c.transactions) == 0 {
+		c.StartTx()
+	}
+
+	c.transactions[len(c.transactions)-1] = append(c.transactions[len(c.transactions)-1], nextElement)
 
 	return nextElement
 }
@@ -88,4 +96,10 @@ func (c *TransactionChannel[T]) Open() bool {
 	}
 
 	return !c.closed
+}
+
+// StartTx starts a new nested transaction.
+func (c *TransactionChannel[T]) StartTx() *TransactionChannel[T] {
+	c.transactions = append(c.transactions, []T{})
+	return c
 }
