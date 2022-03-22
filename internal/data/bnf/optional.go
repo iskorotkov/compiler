@@ -3,6 +3,7 @@ package bnf
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/iskorotkov/compiler/internal/channel"
 	"github.com/iskorotkov/compiler/internal/data/token"
@@ -12,11 +13,18 @@ import (
 var _ BNF = &Optional{}
 
 type Optional struct {
+	Name string
 	BNF
 }
 
 func (o Optional) Accept(tokensCh *channel.TransactionChannel[option.Option[token.Token]]) error {
 	defer tokensCh.Rollback()
+
+	if o.Name != "" {
+		log.Printf("%s: expecting %v", strings.ToUpper(o.Name), o)
+	} else {
+		log.Printf("expecting %v", o)
+	}
 
 	if err := o.BNF.Accept(tokensCh.StartTx()); errors.Is(err, ErrUnexpectedToken) {
 		// Return without committing tx.
@@ -28,4 +36,8 @@ func (o Optional) Accept(tokensCh *channel.TransactionChannel[option.Option[toke
 	tokensCh.Commit()
 
 	return nil
+}
+
+func (o Optional) String() string {
+	return fmt.Sprintf("optional %v", o.BNF)
 }

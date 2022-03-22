@@ -8,7 +8,7 @@ import (
 	"github.com/iskorotkov/compiler/internal/fn/option"
 )
 
-var _ BNF = &Token{0}
+var _ BNF = &Token{}
 
 type Token struct {
 	token.ID
@@ -16,6 +16,8 @@ type Token struct {
 
 func (tk Token) Accept(tokensCh *channel.TransactionChannel[option.Option[token.Token]]) error {
 	defer tokensCh.Rollback()
+
+	log.Printf("expecting %v", tk)
 
 	opt := tokensCh.Read()
 	t, err := opt.Unwrap()
@@ -30,4 +32,8 @@ func (tk Token) Accept(tokensCh *channel.TransactionChannel[option.Option[token.
 	tokensCh.Commit()
 
 	return nil
+}
+
+func (tk Token) String() string {
+	return tk.ID.String()
 }
