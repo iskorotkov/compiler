@@ -117,8 +117,9 @@ const (
 
 	punctuationStart
 	Semicolon
-	Colon
+	Comma
 	Period
+	Colon
 	OpeningParenthesis
 	ClosingParenthesis
 	OpeningBrace
@@ -247,8 +248,9 @@ var (
 		Assign:     ":=",
 
 		Semicolon:          ";",
-		Colon:              ",",
+		Comma:              ",",
 		Period:             ".",
+		Colon:              ":",
 		OpeningParenthesis: "(",
 		ClosingParenthesis: ")",
 		OpeningBrace:       "{",
