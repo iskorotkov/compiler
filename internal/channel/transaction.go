@@ -24,6 +24,10 @@ func (c *TransactionChannel[T]) Commit() {
 	c.m.Lock()
 	defer c.m.Unlock()
 
+	if len(c.transactions) == 0 {
+		return
+	}
+
 	c.transactions[len(c.transactions)-1] = nil
 }
 
