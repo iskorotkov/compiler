@@ -5,16 +5,16 @@ import (
 	"reflect"
 )
 
-type Option[T any, U error] struct {
+type Option[T any] struct {
 	ok  T
-	err U
+	err error
 }
 
-func (o Option[T, U]) Unwrap() (T, U) {
+func (o Option[T]) Unwrap() (T, error) {
 	return o.ok, o.err
 }
 
-func (o Option[T, U]) String() string {
+func (o Option[T]) String() string {
 	if reflect.ValueOf(&o).Elem().FieldByName("err").IsNil() {
 		return fmt.Sprintf("ok: %v", o.ok)
 	}
@@ -22,10 +22,10 @@ func (o Option[T, U]) String() string {
 	return fmt.Sprintf("err: %v", o.err)
 }
 
-func Ok[T any, U error](val T) Option[T, U] {
-	return Option[T, U]{ok: val}
+func Ok[T any](val T) Option[T] {
+	return Option[T]{ok: val}
 }
 
-func Err[T any, U error](err U) Option[T, U] {
-	return Option[T, U]{err: err}
+func Err[T any](err error) Option[T] {
+	return Option[T]{err: err}
 }

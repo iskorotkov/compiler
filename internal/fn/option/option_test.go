@@ -9,15 +9,15 @@ import (
 )
 
 func TestOptionWithOk(t *testing.T) {
-t.Parallel()
+	t.Parallel()
 
-	opt := option.Ok[int, error](123)
+	opt := option.Ok(123)
 
 	assert.Equal(t, "ok: 123", opt.String())
 }
 
 func TestOptionWithErr(t *testing.T) {
-t.Parallel()
+	t.Parallel()
 
 	opt := option.Err[int](fmt.Errorf("test error"))
 

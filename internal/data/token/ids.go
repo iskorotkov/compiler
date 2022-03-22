@@ -5,6 +5,7 @@ type ID int
 const (
 	Unknown = ID(iota)
 	UserDefined
+	EOF
 
 	keywordsStart
 	Absolute
@@ -117,7 +118,7 @@ const (
 	punctuationStart
 	Semicolon
 	Colon
-	Dot
+	Period
 	OpeningParenthesis
 	ClosingParenthesis
 	OpeningBrace
@@ -247,7 +248,7 @@ var (
 
 		Semicolon:          ";",
 		Colon:              ",",
-		Dot:                ".",
+		Period:             ".",
 		OpeningParenthesis: "(",
 		ClosingParenthesis: ")",
 		OpeningBrace:       "{",
@@ -278,6 +279,8 @@ func (i ID) String() string {
 		return "<unknown>"
 	case UserDefined:
 		return "<user defined>"
+	case EOF:
+		return "<EOF>"
 	case Literal:
 		return "<literal>"
 	default:

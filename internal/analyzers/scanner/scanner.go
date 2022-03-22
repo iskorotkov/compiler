@@ -8,6 +8,7 @@ import (
 
 	"github.com/iskorotkov/compiler/internal/data/literal"
 	"github.com/iskorotkov/compiler/internal/data/token"
+	"github.com/iskorotkov/compiler/internal/fn/option"
 )
 
 var (
@@ -27,8 +28,8 @@ func New(buffer int) *Scanner {
 	}
 }
 
-func (l Scanner) Scan(input <-chan literal.Option) <-chan token.Option {
-	ch := make(chan token.Option, l.buffer)
+func (l Scanner) Scan(input <-chan option.Option[literal.Literal]) <-chan option.Option[token.Token] {
+	ch := make(chan option.Option[token.Token], l.buffer)
 
 	go func() {
 		defer close(ch)
@@ -36,7 +37,7 @@ func (l Scanner) Scan(input <-chan literal.Option) <-chan token.Option {
 		for item := range input {
 			lit, err := item.Unwrap()
 			if err != nil {
-				ch <- token.Err(fmt.Errorf("error passed from reader: %w", err))
+				ch <- option.Err[token.Token](fmt.Errorf("error passed from reader: %w", err))
 				continue
 			}
 
@@ -47,7 +48,7 @@ func (l Scanner) Scan(input <-chan literal.Option) <-chan token.Option {
 	return ch
 }
 
-func addTypedToken(lit literal.Literal, ch chan<- token.Option) {
+func addTypedToken(lit literal.Literal, ch chan<- option.Option[token.Token]) {
 	// Whitespace only - skip it.
 	if len(strings.TrimSpace(lit.Value)) == 0 {
 		log.Println("skipping literal as it contains whitespace only")
@@ -56,22 +57,22 @@ func addTypedToken(lit literal.Literal, ch chan<- token.Option) {
 
 	id := token.GetID(lit.Value)
 	if id != token.Unknown {
-		ch <- token.Ok(token.New(id, lit))
+		ch <- option.Ok(token.New(id, lit))
 		return
 	}
 
 	// Constants.
 	if intConstantRegex.MatchString(lit.Value) || doubleConstantRegex.MatchString(lit.Value) || boolConstantRegex.MatchString(lit.Value) {
 		// TODO: Pass value to next analyzers.
-		ch <- token.Ok(token.New(token.Literal, lit))
+		ch <- option.Ok(token.New(token.Literal, lit))
 		return
 	}
 
 	// User identifiers.
 	if userIdentifierRegex.MatchString(lit.Value) {
-		ch <- token.Ok(token.New(token.UserDefined, lit))
+		ch <- option.Ok(token.New(token.UserDefined, lit))
 		return
 	}
 
-	ch <- token.Err(fmt.Errorf("unknown token %s at position %v", lit.Value, lit.Position))
+	ch <- option.Err[token.Token](fmt.Errorf("unknown token %s at position %v", lit.Value, lit.Position))
 }

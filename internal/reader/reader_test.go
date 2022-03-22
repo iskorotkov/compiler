@@ -8,6 +8,7 @@ import (
 
 	"github.com/iskorotkov/compiler/internal/channel"
 	"github.com/iskorotkov/compiler/internal/data/literal"
+	"github.com/iskorotkov/compiler/internal/fn/option"
 	"github.com/iskorotkov/compiler/internal/reader"
 	"github.com/iskorotkov/compiler/internal/snapshot"
 	"github.com/iskorotkov/compiler/testdata"
@@ -19,7 +20,7 @@ func TestReader_Read(t *testing.T) {
 	type Test struct {
 		name     string
 		input    string
-		expected []literal.Option
+		expected []option.Option[literal.Literal]
 	}
 
 	type Config struct {
@@ -31,18 +32,18 @@ func TestReader_Read(t *testing.T) {
 		{
 			name:  "sequence without whitespace",
 			input: "123;,zcxc,t,,czxc,",
-			expected: []literal.Option{
-				literal.Ok(literal.New("123", 1, 1, 4)),
-				literal.Ok(literal.New(";", 1, 4, 5)),
-				literal.Ok(literal.New(",", 1, 5, 6)),
-				literal.Ok(literal.New("zcxc", 1, 6, 10)),
-				literal.Ok(literal.New(",", 1, 10, 11)),
-				literal.Ok(literal.New("t", 1, 11, 12)),
-				literal.Ok(literal.New(",", 1, 12, 13)),
-				literal.Ok(literal.New(",", 1, 13, 14)),
-				literal.Ok(literal.New("czxc", 1, 14, 18)),
-				literal.Ok(literal.New(",", 1, 18, 19)),
-				literal.Ok(literal.New("\n", 1, 19, 20)),
+			expected: []option.Option[literal.Literal]{
+				option.Ok(literal.New("123", 1, 1, 4)),
+				option.Ok(literal.New(";", 1, 4, 5)),
+				option.Ok(literal.New(",", 1, 5, 6)),
+				option.Ok(literal.New("zcxc", 1, 6, 10)),
+				option.Ok(literal.New(",", 1, 10, 11)),
+				option.Ok(literal.New("t", 1, 11, 12)),
+				option.Ok(literal.New(",", 1, 12, 13)),
+				option.Ok(literal.New(",", 1, 13, 14)),
+				option.Ok(literal.New("czxc", 1, 14, 18)),
+				option.Ok(literal.New(",", 1, 18, 19)),
+				option.Ok(literal.New("\n", 1, 19, 20)),
 			},
 		},
 		{
@@ -53,16 +54,16 @@ func TestReader_Read(t *testing.T) {
 		{
 			name:  "sequence with strange whitespace",
 			input: "asd\t\nsa\r\na__sd21s\v123",
-			expected: []literal.Option{
-				literal.Ok(literal.New("asd", 1, 1, 4)),
-				literal.Ok(literal.New("\t", 1, 4, 5)),
-				literal.Ok(literal.New("\n", 1, 5, 6)),
-				literal.Ok(literal.New("sa", 2, 1, 3)),
-				literal.Ok(literal.New("\n", 2, 3, 4)),
-				literal.Ok(literal.New("a__sd21s", 3, 1, 9)),
-				literal.Ok(literal.New("\v", 3, 9, 10)),
-				literal.Ok(literal.New("123", 3, 10, 13)),
-				literal.Ok(literal.New("\n", 3, 13, 14)),
+			expected: []option.Option[literal.Literal]{
+				option.Ok(literal.New("asd", 1, 1, 4)),
+				option.Ok(literal.New("\t", 1, 4, 5)),
+				option.Ok(literal.New("\n", 1, 5, 6)),
+				option.Ok(literal.New("sa", 2, 1, 3)),
+				option.Ok(literal.New("\n", 2, 3, 4)),
+				option.Ok(literal.New("a__sd21s", 3, 1, 9)),
+				option.Ok(literal.New("\v", 3, 9, 10)),
+				option.Ok(literal.New("123", 3, 10, 13)),
+				option.Ok(literal.New("\n", 3, 13, 14)),
 			},
 		},
 	}

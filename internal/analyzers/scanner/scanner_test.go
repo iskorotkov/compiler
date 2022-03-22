@@ -9,6 +9,7 @@ import (
 	"github.com/iskorotkov/compiler/internal/analyzers/scanner"
 	"github.com/iskorotkov/compiler/internal/channel"
 	"github.com/iskorotkov/compiler/internal/data/literal"
+	"github.com/iskorotkov/compiler/internal/fn/option"
 	"github.com/iskorotkov/compiler/internal/snapshot"
 )
 
@@ -17,7 +18,7 @@ func TestScanner_Scan(t *testing.T) {
 
 	tests := []struct {
 		name  string
-		input []literal.Option
+		input []option.Option[literal.Literal]
 	}{
 		{
 			name:  "simple for loop",
@@ -46,10 +47,10 @@ func TestScanner_Scan(t *testing.T) {
 	}
 }
 
-func fromString(s string) []literal.Option {
-	var literals []literal.Option
+func fromString(s string) []option.Option[literal.Literal] {
+	var literals []option.Option[literal.Literal]
 	for _, part := range strings.Split(s, " ") {
-		literals = append(literals, literal.Ok(literal.New(part, 0, 0, 0)))
+		literals = append(literals, option.Ok(literal.New(part, 0, 0, 0)))
 	}
 
 	return literals
