@@ -63,7 +63,6 @@ func addTypedToken(lit literal.Literal, ch chan<- option.Option[token.Token]) {
 
 	// Constants.
 	if intConstantRegex.MatchString(lit.Value) || doubleConstantRegex.MatchString(lit.Value) || boolConstantRegex.MatchString(lit.Value) {
-		// TODO: Pass value to next analyzers.
 		ch <- option.Ok(token.New(token.Literal, lit))
 		return
 	}
