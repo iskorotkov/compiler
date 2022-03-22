@@ -1,4 +1,4 @@
-package bnf
+package aggregates
 
 import (
 	"errors"
@@ -6,15 +6,16 @@ import (
 	"strings"
 
 	"github.com/iskorotkov/compiler/internal/channel"
+	"github.com/iskorotkov/compiler/internal/data/bnf"
 	"github.com/iskorotkov/compiler/internal/data/token"
 	"github.com/iskorotkov/compiler/internal/fn/option"
 )
 
-var _ BNF = &Either{}
+var _ bnf.BNF = &Either{}
 
 type Either struct {
 	Name string
-	BNFs []BNF
+	BNFs []bnf.BNF
 }
 
 func (e Either) Accept(tokensCh *channel.TransactionChannel[option.Option[token.Token]]) error {
@@ -27,8 +28,8 @@ func (e Either) Accept(tokensCh *channel.TransactionChannel[option.Option[token.
 	}
 
 	var lastError error
-	for _, bnf := range e.BNFs {
-		if err := bnf.Accept(tokensCh.StartTx()); errors.Is(err, ErrUnexpectedToken) {
+	for _, item := range e.BNFs {
+		if err := item.Accept(tokensCh.StartTx()); errors.Is(err, bnf.ErrUnexpectedToken) {
 			lastError = err
 			continue
 		} else if err != nil {

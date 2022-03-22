@@ -1,4 +1,4 @@
-package bnf
+package aggregates
 
 import (
 	"github.com/iskorotkov/compiler/internal/logger"

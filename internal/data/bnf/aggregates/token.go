@@ -1,14 +1,15 @@
-package bnf
+package aggregates
 
 import (
 	"fmt"
 
 	"github.com/iskorotkov/compiler/internal/channel"
+	"github.com/iskorotkov/compiler/internal/data/bnf"
 	"github.com/iskorotkov/compiler/internal/data/token"
 	"github.com/iskorotkov/compiler/internal/fn/option"
 )
 
-var _ BNF = &Token{}
+var _ bnf.BNF = &Token{}
 
 type Token struct {
 	token.ID
@@ -26,7 +27,7 @@ func (tk Token) Accept(tokensCh *channel.TransactionChannel[option.Option[token.
 	}
 
 	if tk.ID != t.ID {
-		return fmt.Errorf("expected token %v, got %v: %w", tk, t.ID, ErrUnexpectedToken)
+		return fmt.Errorf("expected token %v, got %v: %w", tk, t.ID, bnf.ErrUnexpectedToken)
 	}
 
 	tokensCh.Commit()

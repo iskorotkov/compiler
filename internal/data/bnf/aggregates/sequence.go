@@ -1,19 +1,20 @@
-package bnf
+package aggregates
 
 import (
 	"fmt"
 	"strings"
 
 	"github.com/iskorotkov/compiler/internal/channel"
+	"github.com/iskorotkov/compiler/internal/data/bnf"
 	"github.com/iskorotkov/compiler/internal/data/token"
 	"github.com/iskorotkov/compiler/internal/fn/option"
 )
 
-var _ BNF = &Sequence{}
+var _ bnf.BNF = &Sequence{}
 
 type Sequence struct {
 	Name string
-	BNFs []BNF
+	BNFs []bnf.BNF
 }
 
 func (s Sequence) Accept(tokensCh *channel.TransactionChannel[option.Option[token.Token]]) error {
@@ -25,8 +26,8 @@ func (s Sequence) Accept(tokensCh *channel.TransactionChannel[option.Option[toke
 		log.Printf("expecting %v", s)
 	}
 
-	for i, bnf := range s.BNFs {
-		if err := bnf.Accept(tokensCh.StartTx()); err != nil {
+	for i, item := range s.BNFs {
+		if err := item.Accept(tokensCh.StartTx()); err != nil {
 			return fmt.Errorf("error in composite at index %d: %w", i, err)
 		}
 	}
