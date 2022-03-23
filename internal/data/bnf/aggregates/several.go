@@ -3,7 +3,6 @@ package aggregates
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/iskorotkov/compiler/internal/channel"
 	"github.com/iskorotkov/compiler/internal/data/bnf"
@@ -21,11 +20,7 @@ type Several struct {
 func (s Several) Accept(tokensCh *channel.TransactionChannel[option.Option[token.Token]]) error {
 	defer tokensCh.Rollback()
 
-	if s.Name != "" {
-		log.Printf("%s: expecting %v", strings.ToUpper(s.Name), s)
-	} else {
-		log.Printf("expecting %v", s)
-	}
+	log.Print(s)
 
 	for {
 		if err := s.BNF.Accept(tokensCh.StartTx()); errors.Is(err, bnf.ErrUnexpectedToken) {
@@ -38,5 +33,9 @@ func (s Several) Accept(tokensCh *channel.TransactionChannel[option.Option[token
 }
 
 func (s Several) String() string {
-	return fmt.Sprintf("several of %v", s.BNF)
+	if s.Name != "" {
+		return fmt.Sprintf("several %q", s.Name)
+	} else {
+		return fmt.Sprintf("several")
+	}
 }

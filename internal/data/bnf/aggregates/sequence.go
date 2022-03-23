@@ -2,7 +2,6 @@ package aggregates
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/iskorotkov/compiler/internal/channel"
 	"github.com/iskorotkov/compiler/internal/data/bnf"
@@ -20,11 +19,7 @@ type Sequence struct {
 func (s Sequence) Accept(tokensCh *channel.TransactionChannel[option.Option[token.Token]]) error {
 	defer tokensCh.Rollback()
 
-	if s.Name != "" {
-		log.Printf("%s: expecting %v", strings.ToUpper(s.Name), s)
-	} else {
-		log.Printf("expecting %v", s)
-	}
+	log.Print(s)
 
 	for i, item := range s.BNFs {
 		if err := item.Accept(tokensCh.StartTx()); err != nil {
@@ -39,13 +34,12 @@ func (s Sequence) Accept(tokensCh *channel.TransactionChannel[option.Option[toke
 
 func (s Sequence) String() string {
 	if len(s.BNFs) == 0 {
-		return "<empty>"
+		return "empty"
 	}
 
-	var values []string
-	for _, value := range s.BNFs {
-		values = append(values, value.String())
+	if s.Name != "" {
+		return fmt.Sprintf("sequence %q", s.Name)
+	} else {
+		return fmt.Sprintf("sequence")
 	}
-
-	return fmt.Sprintf("sequence of (%s)", strings.Join(values, "; "))
 }

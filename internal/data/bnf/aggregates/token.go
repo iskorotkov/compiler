@@ -18,7 +18,7 @@ type Token struct {
 func (tk Token) Accept(tokensCh *channel.TransactionChannel[option.Option[token.Token]]) error {
 	defer tokensCh.Rollback()
 
-	log.Printf("expecting %v", tk)
+	log.Print(tk)
 
 	opt := tokensCh.Read()
 	t, err := opt.Unwrap()
@@ -36,5 +36,5 @@ func (tk Token) Accept(tokensCh *channel.TransactionChannel[option.Option[token.
 }
 
 func (tk Token) String() string {
-	return tk.ID.String()
+	return fmt.Sprintf("token %q", tk.ID.String())
 }

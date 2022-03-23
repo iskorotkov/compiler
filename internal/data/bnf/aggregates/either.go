@@ -3,7 +3,6 @@ package aggregates
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/iskorotkov/compiler/internal/channel"
 	"github.com/iskorotkov/compiler/internal/data/bnf"
@@ -21,11 +20,7 @@ type Either struct {
 func (e Either) Accept(tokensCh *channel.TransactionChannel[option.Option[token.Token]]) error {
 	defer tokensCh.Rollback()
 
-	if e.Name != "" {
-		log.Printf("%s: expecting %v", strings.ToUpper(e.Name), e)
-	} else {
-		log.Printf("expecting %v", e)
-	}
+	log.Print(e)
 
 	var lastError error
 	for _, item := range e.BNFs {
@@ -45,10 +40,9 @@ func (e Either) Accept(tokensCh *channel.TransactionChannel[option.Option[token.
 }
 
 func (e Either) String() string {
-	var values []string
-	for _, value := range e.BNFs {
-		values = append(values, value.String())
+	if e.Name != "" {
+		return fmt.Sprintf("either %q", e.Name)
+	} else {
+		return fmt.Sprintf("either")
 	}
-
-	return fmt.Sprintf("either of (%s)", strings.Join(values, "; "))
 }
