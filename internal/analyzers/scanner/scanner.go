@@ -43,6 +43,8 @@ func (l Scanner) Scan(input <-chan option.Option[literal.Literal]) <-chan option
 
 			addTypedToken(lit, ch)
 		}
+
+		ch <- option.Ok(token.Token{ID: token.EOF})
 	}()
 
 	return ch

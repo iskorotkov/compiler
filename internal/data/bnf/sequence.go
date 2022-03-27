@@ -1,19 +1,18 @@
-package aggregates
+package bnf
 
 import (
 	"fmt"
 
 	"github.com/iskorotkov/compiler/internal/channel"
-	"github.com/iskorotkov/compiler/internal/data/bnf"
 	"github.com/iskorotkov/compiler/internal/data/token"
 	"github.com/iskorotkov/compiler/internal/fn/option"
 )
 
-var _ bnf.BNF = &Sequence{}
+var _ BNF = &Sequence{}
 
 type Sequence struct {
 	Name string
-	BNFs []bnf.BNF
+	BNFs []BNF
 }
 
 func (s Sequence) Accept(tokensCh *channel.TransactionChannel[option.Option[token.Token]]) error {

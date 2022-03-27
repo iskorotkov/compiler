@@ -1,20 +1,19 @@
-package aggregates
+package bnf
 
 import (
 	"errors"
 	"fmt"
 
 	"github.com/iskorotkov/compiler/internal/channel"
-	"github.com/iskorotkov/compiler/internal/data/bnf"
 	"github.com/iskorotkov/compiler/internal/data/token"
 	"github.com/iskorotkov/compiler/internal/fn/option"
 )
 
-var _ bnf.BNF = &Several{}
+var _ BNF = &Several{}
 
 type Several struct {
 	Name string
-	bnf.BNF
+	BNF
 }
 
 func (s Several) Accept(tokensCh *channel.TransactionChannel[option.Option[token.Token]]) error {
@@ -23,7 +22,7 @@ func (s Several) Accept(tokensCh *channel.TransactionChannel[option.Option[token
 	log.Print(s)
 
 	for {
-		if err := s.BNF.Accept(tokensCh.StartTx()); errors.Is(err, bnf.ErrUnexpectedToken) {
+		if err := s.BNF.Accept(tokensCh.StartTx()); errors.Is(err, ErrUnexpectedToken) {
 			tokensCh.Commit()
 			return nil
 		} else if err != nil {

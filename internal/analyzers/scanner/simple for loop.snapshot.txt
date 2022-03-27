@@ -9,3 +9,4 @@ ok: <user defined>: "writeln" at 0:0-0
 ok: (: "(" at 0:0-0
 ok: <user defined>: "i" at 0:0-0
 ok: ): ")" at 0:0-0
+ok: <EOF>: "" at 0:0-0
