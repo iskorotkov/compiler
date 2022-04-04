@@ -1,11 +1,17 @@
 package logger
 
 import (
-	"fmt"
-	"log"
 	"os"
+
+	"go.uber.org/zap"
 )
 
-func New(tag string) *log.Logger {
-	return log.New(os.Stdout, fmt.Sprintf("[%s] ", tag), log.LstdFlags|log.Lmsgprefix|log.Lshortfile)
+func New() *zap.SugaredLogger {
+	if os.Getenv("DEBUG") == "1" {
+		logger, _ := zap.NewDevelopment()
+		return logger.Sugar()
+	}
+
+	logger, _ := zap.NewProduction()
+	return logger.Sugar()
 }
