@@ -4,4 +4,4 @@
 .vscode/
 .trunk/
 
-./compiler
+compiler

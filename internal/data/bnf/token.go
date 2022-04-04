@@ -20,7 +20,6 @@ func (tk Token) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionChan
 	defer tokensCh.Rollback()
 
 	log = log.Named(tk.String())
-	log.Debug("accepting")
 
 	t, err := tokensCh.Read().Unwrap()
 	if err != nil {
@@ -33,11 +32,12 @@ func (tk Token) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionChan
 		return fmt.Errorf("expected %v, got %v: %w", tk, t.ID, ErrUnexpectedToken)
 	}
 
+	log.Debugf("commit")
 	tokensCh.Commit()
 
 	return nil
 }
 
 func (tk Token) String() string {
-	return fmt.Sprintf("token %q", tk.ID.String())
+	return tk.ID.String()
 }

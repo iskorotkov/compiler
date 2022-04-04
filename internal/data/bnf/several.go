@@ -22,7 +22,6 @@ func (s Several) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionCha
 	defer tokensCh.Rollback()
 
 	log = log.Named(s.String())
-	log.Debug("accepting")
 
 	for {
 		if err := s.BNF.Accept(log, tokensCh.StartTx()); errors.Is(err, ErrUnexpectedToken) {
@@ -38,7 +37,7 @@ func (s Several) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionCha
 
 func (s Several) String() string {
 	if s.Name != "" {
-		return fmt.Sprintf("several %q", s.Name)
+		return s.Name
 	} else {
 		return fmt.Sprintf("several")
 	}

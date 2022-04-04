@@ -1,1 +1,1 @@
-ok: sequence "program"
+ok: program

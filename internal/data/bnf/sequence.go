@@ -21,7 +21,6 @@ func (s Sequence) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionCh
 	defer tokensCh.Rollback()
 
 	log = log.Named(s.String())
-	log.Debug("accepting")
 
 	for i, item := range s.BNFs {
 		if err := item.Accept(log, tokensCh.StartTx()); err != nil {
@@ -30,6 +29,7 @@ func (s Sequence) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionCh
 		}
 	}
 
+	log.Debugf("commit")
 	tokensCh.Commit()
 
 	return nil
@@ -41,7 +41,7 @@ func (s Sequence) String() string {
 	}
 
 	if s.Name != "" {
-		return fmt.Sprintf("sequence %q", s.Name)
+		return s.Name
 	} else {
 		return fmt.Sprintf("sequence")
 	}

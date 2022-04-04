@@ -22,7 +22,6 @@ func (o Optional) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionCh
 	defer tokensCh.Rollback()
 
 	log = log.Named(o.String())
-	log.Debug("accepting")
 
 	if err := o.BNF.Accept(log, tokensCh.StartTx()); errors.Is(err, ErrUnexpectedToken) {
 		log.Debugf("%v in %s, rollback tx", o, err)
@@ -32,6 +31,7 @@ func (o Optional) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionCh
 		return fmt.Errorf("error in %s: %w", o, err)
 	}
 
+	log.Debugf("commit")
 	tokensCh.Commit()
 
 	return nil
@@ -39,7 +39,7 @@ func (o Optional) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionCh
 
 func (o Optional) String() string {
 	if o.Name != "" {
-		return fmt.Sprintf("optional %q", o.Name)
+		return o.Name
 	} else {
 		return fmt.Sprintf("optional")
 	}

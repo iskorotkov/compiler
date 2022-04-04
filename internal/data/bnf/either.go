@@ -22,7 +22,6 @@ func (e Either) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionChan
 	defer tokensCh.Rollback()
 
 	log = log.Named(e.String())
-	log.Debug("accepting")
 
 	var lastError error
 	for _, item := range e.BNFs {
@@ -35,6 +34,7 @@ func (e Either) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionChan
 			return fmt.Errorf("error in optional: %w", err)
 		}
 
+		log.Debugf("commit")
 		tokensCh.Commit()
 
 		return nil
@@ -45,7 +45,7 @@ func (e Either) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionChan
 
 func (e Either) String() string {
 	if e.Name != "" {
-		return fmt.Sprintf("either %q", e.Name)
+		return e.Name
 	} else {
 		return fmt.Sprintf("either")
 	}

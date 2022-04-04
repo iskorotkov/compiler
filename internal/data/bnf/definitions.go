@@ -103,7 +103,7 @@ func init() {
 	SimpleExpression = Sequence{"simple expression", []BNF{
 		&Sign,
 		&AdditiveOperand,
-		Optional{"", Sequence{"", []BNF{
+		Several{"", Sequence{"", []BNF{
 			&AdditiveOperation,
 			&AdditiveOperand,
 		}}},
@@ -127,7 +127,7 @@ func init() {
 
 	AdditiveOperand = Sequence{"additive operand", []BNF{
 		&MultiplicativeOperand,
-		Optional{"", Sequence{"", []BNF{
+		Several{"", Sequence{"", []BNF{
 			&MultiplicativeOperation,
 			&MultiplicativeOperand,
 		}}},
