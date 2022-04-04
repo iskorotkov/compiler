@@ -1,11 +1,43 @@
 package main
 
 import (
+	"io"
+	"os"
+
+	"github.com/iskorotkov/compiler/internal/analyzers/scanner"
+	"github.com/iskorotkov/compiler/internal/analyzers/syntax_analyzer"
 	"github.com/iskorotkov/compiler/internal/logger"
+	"github.com/iskorotkov/compiler/internal/reader"
 )
 
-var log = logger.New("main")
+var log = logger.New().Named("main")
 
 func main() {
-	log.Print("compiler started")
+	if len(os.Args) > 1 {
+		file, err := os.OpenFile(os.Args[1], os.O_RDONLY, 0666)
+		if err != nil {
+			log.Fatalf("error opening file: %s", err)
+		}
+
+		compile(file)
+
+		return
+	}
+
+	compile(os.Stdin)
+}
+
+func compile(r io.Reader) {
+	buffer := 0
+
+	rd := reader.New(buffer)
+	literals := rd.Read(r)
+
+	sc := scanner.New(buffer)
+	tokens := sc.Scan(literals)
+
+	sa := syntax_analyzer.New(buffer)
+	syntaxConstructions := sa.Analyze(tokens)
+
+	log.Infof("compiler finished with result %v", <-syntaxConstructions)
 }
