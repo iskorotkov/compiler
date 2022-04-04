@@ -62,7 +62,7 @@ func init() {
 		&BoolLiteral,
 	}}
 
-	ConstantDefinition = Sequence{"constant definition", []BNF{
+	ConstantDefinition = Sequence{"constant-definition", []BNF{
 		Token{token.UserDefined},
 		Token{token.Eq},
 		&Constant,
@@ -100,7 +100,7 @@ func init() {
 		}}},
 	}}
 
-	SimpleExpression = Sequence{"simple expression", []BNF{
+	SimpleExpression = Sequence{"simple-expression", []BNF{
 		&Sign,
 		&AdditiveOperand,
 		Several{"", Sequence{"", []BNF{
@@ -109,7 +109,7 @@ func init() {
 		}}},
 	}}
 
-	RelationOperation = Either{"relation operation", []BNF{
+	RelationOperation = Either{"relation-operation", []BNF{
 		Token{token.Eq},
 		Token{token.Ne},
 		Token{token.Lt},
@@ -119,13 +119,13 @@ func init() {
 		Token{token.In},
 	}}
 
-	AdditiveOperation = Either{"additive operation", []BNF{
+	AdditiveOperation = Either{"additive-operation", []BNF{
 		Token{token.Plus},
 		Token{token.Minus},
 		Token{token.Or},
 	}}
 
-	AdditiveOperand = Sequence{"additive operand", []BNF{
+	AdditiveOperand = Sequence{"additive-operand", []BNF{
 		&MultiplicativeOperand,
 		Several{"", Sequence{"", []BNF{
 			&MultiplicativeOperation,
@@ -133,7 +133,7 @@ func init() {
 		}}},
 	}}
 
-	MultiplicativeOperation = Either{"multiplicative operation", []BNF{
+	MultiplicativeOperation = Either{"multiplicative-operation", []BNF{
 		Token{token.Multiply},
 		Token{token.Divide},
 		Token{token.Div},
@@ -141,7 +141,7 @@ func init() {
 		Token{token.And},
 	}}
 
-	MultiplicativeOperand = Either{"multiplicative operand", []BNF{
+	MultiplicativeOperand = Either{"multiplicative-operand", []BNF{
 		&Variable,
 		&Constant,
 		Sequence{"", []BNF{
@@ -173,7 +173,7 @@ var (
 func init() {
 	FunctionName = Token{token.UserDefined}
 
-	ParameterGroup = Sequence{"parameter group", []BNF{
+	ParameterGroup = Sequence{"parameter-group", []BNF{
 		Token{token.UserDefined},
 		Several{"", Sequence{"", []BNF{
 			Token{token.Comma},
@@ -183,7 +183,7 @@ func init() {
 		&Type,
 	}}
 
-	FormalParameters = Either{"formal parameters", []BNF{
+	FormalParameters = Either{"formal-parameters", []BNF{
 		&ParameterGroup,
 		Sequence{"", []BNF{
 			Token{token.Var},
@@ -195,13 +195,13 @@ func init() {
 		}},
 	}}
 
-	FactualParameter = Either{"factual parameter", []BNF{
+	FactualParameter = Either{"factual-parameter", []BNF{
 		&Expression,
 		&Variable,
 		&FunctionName,
 	}}
 
-	FunctionHeader = Sequence{"function header", []BNF{
+	FunctionHeader = Sequence{"function-header", []BNF{
 		Token{token.Function},
 		&FunctionName,
 		Optional{"", Sequence{"", []BNF{
@@ -215,14 +215,14 @@ func init() {
 		&Type,
 	}}
 
-	FunctionDefinition = Sequence{"function definition", []BNF{
+	FunctionDefinition = Sequence{"function-definition", []BNF{
 		&FunctionHeader,
 		&Block,
 	}}
 
 	Functions = Several{"functions", &FunctionDefinition}
 
-	FunctionUsage = Sequence{"function usage", []BNF{
+	FunctionUsage = Sequence{"function-usage", []BNF{
 		&FunctionName,
 		Optional{"", Sequence{"", []BNF{
 			Token{token.OpeningParenthesis},
@@ -300,12 +300,12 @@ func init() {
 		&ComplexOperator,
 	}}
 
-	SimpleOperator = Either{"simple operator", []BNF{
+	SimpleOperator = Either{"simple-operator", []BNF{
 		&AssignmentOperator,
 		&Empty,
 	}}
 
-	CompositeOperator = Sequence{"composite operator", []BNF{
+	CompositeOperator = Sequence{"composite-operator", []BNF{
 		Token{token.Begin},
 		&Operator,
 		Several{"", Sequence{"", []BNF{
@@ -315,7 +315,7 @@ func init() {
 		Token{token.End},
 	}}
 
-	ComplexOperator = Either{"complex operator", []BNF{
+	ComplexOperator = Either{"complex-operator", []BNF{
 		&CompositeOperator,
 		&AssignmentOperator,
 		&ConditionOperator,
@@ -336,7 +336,7 @@ func init() {
 		&CompositeOperator,
 	}}
 
-	AssignmentOperator = Sequence{"assignment operator", []BNF{
+	AssignmentOperator = Sequence{"assignment-operator", []BNF{
 		Either{"", []BNF{
 			&Variable,
 			&FunctionName,
@@ -357,7 +357,7 @@ var (
 func init() {
 	Type = Token{token.UserDefined}
 
-	TypeDefinition = Sequence{"type definition", []BNF{
+	TypeDefinition = Sequence{"type-definition", []BNF{
 		Token{token.UserDefined},
 		Token{token.Eq},
 		&Type,
@@ -385,7 +385,7 @@ var (
 )
 
 func init() {
-	VariableName = Sequence{"variable name", []BNF{
+	VariableName = Sequence{"variable-name", []BNF{
 		Token{token.UserDefined},
 	}}
 
@@ -397,7 +397,7 @@ func init() {
 		&FullVariable,
 	}}
 
-	SameTypeVariables = Sequence{"same type variables", []BNF{
+	SameTypeVariables = Sequence{"same-type-variables", []BNF{
 		Token{token.UserDefined},
 		Several{"", Sequence{"", []BNF{
 			Token{token.Comma},
