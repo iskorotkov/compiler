@@ -31,7 +31,7 @@ func (a SyntaxAnalyzer) Analyze(input <-chan option.Option[token.Token]) <-chan 
 		tx := channel.NewTransactionChannel(input)
 
 		if err := bnf.Program.Accept(log, tx); err != nil {
-			log.Infof("error during syntax analysis: %v", err)
+			log.Debugf("error during syntax analysis: %v", err)
 			ch <- option.Err[bnf.BNF](err)
 			return
 		}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"os"
 
@@ -16,7 +17,8 @@ func main() {
 	if len(os.Args) > 1 {
 		file, err := os.OpenFile(os.Args[1], os.O_RDONLY, 0666)
 		if err != nil {
-			log.Fatalf("error opening file: %s", err)
+			fmt.Println(err)
+			os.Exit(1)
 		}
 
 		compile(file)
@@ -39,5 +41,11 @@ func compile(r io.Reader) {
 	sa := syntax_analyzer.New(buffer)
 	syntaxConstructions := sa.Analyze(tokens)
 
-	log.Infof("compiler finished with result %v", <-syntaxConstructions)
+	_, err := (<-syntaxConstructions).Unwrap()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println("compiled successfully")
 }

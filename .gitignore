@@ -1,5 +1,7 @@
-.env
-.idea
-.vs
-.vscode
-.trunk
+.env/
+.idea/
+.vs/
+.vscode/
+.trunk/
+
+./compiler
