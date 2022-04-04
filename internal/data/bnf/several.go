@@ -30,7 +30,7 @@ func (s Several) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionCha
 			return nil
 		} else if err != nil {
 			log.Debugf("%v in %v, returning", err, s)
-			return fmt.Errorf("error in %v: %w", s, err)
+			return err
 		}
 	}
 }

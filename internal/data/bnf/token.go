@@ -29,7 +29,7 @@ func (tk Token) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionChan
 
 	if tk.ID != t.ID {
 		log.Debugf("expected %v, got %v, returning", tk, t.ID)
-		return fmt.Errorf("expected %v, got %v: %w", tk, t.ID, ErrUnexpectedToken)
+		return fmt.Errorf("%v: expected %q, got %q: %w", t.Literal, tk, t.ID, ErrUnexpectedToken)
 	}
 
 	log.Debugf("commit")

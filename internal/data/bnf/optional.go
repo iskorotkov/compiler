@@ -24,11 +24,11 @@ func (o Optional) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionCh
 	log = log.Named(o.String())
 
 	if err := o.BNF.Accept(log, tokensCh.StartTx()); errors.Is(err, ErrUnexpectedToken) {
-		log.Debugf("%v in %s, rollback tx", o, err)
+		log.Debugf("%v in %v, rollback tx", err, o)
 		return nil
 	} else if err != nil {
-		log.Debugf("%v, returning", err)
-		return fmt.Errorf("error in %s: %w", o, err)
+		log.Debugf("%v in %v, returning", err, o)
+		return err
 	}
 
 	log.Debugf("commit")

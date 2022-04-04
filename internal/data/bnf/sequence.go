@@ -22,10 +22,10 @@ func (s Sequence) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionCh
 
 	log = log.Named(s.String())
 
-	for i, item := range s.BNFs {
+	for _, item := range s.BNFs {
 		if err := item.Accept(log, tokensCh.StartTx()); err != nil {
 			log.Debugf("%v in %v, returning", err, s)
-			return fmt.Errorf("error in %v at index %d: %w", s, i, err)
+			return err
 		}
 	}
 

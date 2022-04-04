@@ -27,11 +27,11 @@ func (e Either) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionChan
 	for _, item := range e.BNFs {
 		if err := item.Accept(log, tokensCh.StartTx()); errors.Is(err, ErrUnexpectedToken) {
 			lastError = err
-			log.Debugf("error %v, skipping", err)
+			log.Debugf("%v in %v, skipping", err, e)
 			continue
 		} else if err != nil {
-			log.Debugf("error %v, returning", err)
-			return fmt.Errorf("error in optional: %w", err)
+			log.Debugf("%v in %v, returning", err, e)
+			return err
 		}
 
 		log.Debugf("commit")

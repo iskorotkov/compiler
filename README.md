@@ -44,7 +44,7 @@ go run cmd/compiler/main.go
 
 # Файл с некорректной программой:
 ./compiler program.pas
-> error in sequence "program" at index 0: expected token "program", got .: unexpected token
+> "module" at 1:1-7: expected "program", got "module": unexpected token
 
 # Чтение из стандартного ввода-вывода (корректная программа):
 cat program.pas | ./compiler
