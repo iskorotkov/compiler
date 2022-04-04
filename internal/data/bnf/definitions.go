@@ -26,8 +26,10 @@ func init() {
 // Constants.
 
 var (
-	Number             Sequence
-	Constant           Sequence
+	IntLiteral         Token
+	DoubleLiteral      Token
+	BoolLiteral        Token
+	Constant           Either
 	ConstantDefinition Sequence
 	Constants          Optional
 	Sign               Either
@@ -37,16 +39,27 @@ func init() {
 	Sign = Either{"sign", []BNF{
 		Token{token.Plus},
 		Token{token.Minus},
+		&Empty,
 	}}
 
-	Number = Sequence{} // TODO: Parse and mark literals to use it in constants section.
+	IntLiteral = Token{token.IntLiteral}
 
-	Constant = Sequence{"constant", []BNF{
-		Optional{"", Sign},
-		Either{"", []BNF{
-			&Number,
-			Token{token.UserDefined},
+	DoubleLiteral = Token{token.DoubleLiteral}
+
+	BoolLiteral = Token{token.BoolLiteral}
+
+	Constant = Either{"constant", []BNF{
+		Sequence{"", []BNF{
+			Optional{"", Sign},
+			Either{"", []BNF{
+				Either{"", []BNF{
+					&IntLiteral,
+					&DoubleLiteral,
+				}},
+				Token{token.UserDefined},
+			}},
 		}},
+		&BoolLiteral,
 	}}
 
 	ConstantDefinition = Sequence{"constant definition", []BNF{
@@ -87,7 +100,7 @@ func init() {
 		}}},
 	}}
 
-	SimpleExpression = Sequence{"", []BNF{
+	SimpleExpression = Sequence{"simple expression", []BNF{
 		&Sign,
 		&AdditiveOperand,
 		Optional{"", Sequence{"", []BNF{

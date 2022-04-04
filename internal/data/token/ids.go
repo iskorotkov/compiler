@@ -136,8 +136,9 @@ const (
 	whiteSpaceEnd
 
 	literalsStart
-	// TODO: Add literals.
-	Literal
+	IntLiteral
+	DoubleLiteral
+	BoolLiteral
 	literalsEnd
 )
 
@@ -283,8 +284,12 @@ func (i ID) String() string {
 		return "<user defined>"
 	case EOF:
 		return "<EOF>"
-	case Literal:
-		return "<literal>"
+	case IntLiteral:
+		return "<int literal>"
+	case DoubleLiteral:
+		return "<double literal>"
+	case BoolLiteral:
+		return "<bool literal>"
 	default:
 		return tokens[i]
 	}

@@ -3,6 +3,8 @@ package bnf
 import (
 	"fmt"
 
+	"go.uber.org/zap"
+
 	"github.com/iskorotkov/compiler/internal/channel"
 	"github.com/iskorotkov/compiler/internal/data/token"
 	"github.com/iskorotkov/compiler/internal/fn/option"
@@ -15,14 +17,16 @@ type Sequence struct {
 	BNFs []BNF
 }
 
-func (s Sequence) Accept(tokensCh *channel.TransactionChannel[option.Option[token.Token]]) error {
+func (s Sequence) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionChannel[option.Option[token.Token]]) error {
 	defer tokensCh.Rollback()
 
-	log.Print(s)
+	log = log.Named(s.String())
+	log.Debug("accepting")
 
 	for i, item := range s.BNFs {
-		if err := item.Accept(tokensCh.StartTx()); err != nil {
-			return fmt.Errorf("error in composite at index %d: %w", i, err)
+		if err := item.Accept(log, tokensCh.StartTx()); err != nil {
+			log.Debugf("%v in %v, returning", err, s)
+			return fmt.Errorf("error in %v at index %d: %w", s, i, err)
 		}
 	}
 

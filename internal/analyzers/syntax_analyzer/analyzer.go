@@ -8,7 +8,7 @@ import (
 	"github.com/iskorotkov/compiler/internal/logger"
 )
 
-var log = logger.New("syntax analyzer")
+var log = logger.New().Named("syntax_analyzer")
 
 type SyntaxAnalyzer struct {
 	buffer int
@@ -26,16 +26,17 @@ func (a SyntaxAnalyzer) Analyze(input <-chan option.Option[token.Token]) <-chan 
 	go func() {
 		defer close(ch)
 
-		log.Printf("started")
+		log.Debugf("syntax analysis started")
 
 		tx := channel.NewTransactionChannel(input)
 
-		if err := bnf.Program.Accept(tx); err != nil {
-			log.Print(err)
+		if err := bnf.Program.Accept(log, tx); err != nil {
+			log.Infof("error during syntax analysis: %v", err)
 			ch <- option.Err[bnf.BNF](err)
+			return
 		}
 
-		log.Printf("success")
+		log.Debugf("syntax analysis succeeded")
 		ch <- option.Ok[bnf.BNF](bnf.Program)
 	}()
 

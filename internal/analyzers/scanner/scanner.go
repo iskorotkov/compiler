@@ -2,13 +2,13 @@ package scanner
 
 import (
 	"fmt"
-	"log"
 	"regexp"
 	"strings"
 
 	"github.com/iskorotkov/compiler/internal/data/literal"
 	"github.com/iskorotkov/compiler/internal/data/token"
 	"github.com/iskorotkov/compiler/internal/fn/option"
+	"github.com/iskorotkov/compiler/internal/logger"
 )
 
 var (
@@ -16,6 +16,8 @@ var (
 	doubleConstantRegex = regexp.MustCompile(`^\d+\.\d+$`)
 	boolConstantRegex   = regexp.MustCompile(`^true$|^false$`)
 	userIdentifierRegex = regexp.MustCompile(`^(?i)[a-z_]\w*$`)
+
+	log = logger.New().Named("scanner")
 )
 
 type Scanner struct {
@@ -53,7 +55,7 @@ func (l Scanner) Scan(input <-chan option.Option[literal.Literal]) <-chan option
 func addTypedToken(lit literal.Literal, ch chan<- option.Option[token.Token]) {
 	// Whitespace only - skip it.
 	if len(strings.TrimSpace(lit.Value)) == 0 {
-		log.Println("skipping literal as it contains whitespace only")
+		log.Debugf("skipping literal as it contains whitespace only")
 		return
 	}
 
@@ -64,8 +66,18 @@ func addTypedToken(lit literal.Literal, ch chan<- option.Option[token.Token]) {
 	}
 
 	// Constants.
-	if intConstantRegex.MatchString(lit.Value) || doubleConstantRegex.MatchString(lit.Value) || boolConstantRegex.MatchString(lit.Value) {
-		ch <- option.Ok(token.New(token.Literal, lit))
+	if intConstantRegex.MatchString(lit.Value) {
+		ch <- option.Ok(token.New(token.IntLiteral, lit))
+		return
+	}
+
+	if doubleConstantRegex.MatchString(lit.Value) {
+		ch <- option.Ok(token.New(token.DoubleLiteral, lit))
+		return
+	}
+
+	if boolConstantRegex.MatchString(lit.Value) {
+		ch <- option.Ok(token.New(token.BoolLiteral, lit))
 		return
 	}
 

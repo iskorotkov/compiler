@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"go.uber.org/zap"
+
 	"github.com/iskorotkov/compiler/internal/channel"
 	"github.com/iskorotkov/compiler/internal/data/token"
 	"github.com/iskorotkov/compiler/internal/fn/option"
@@ -16,17 +18,20 @@ type Either struct {
 	BNFs []BNF
 }
 
-func (e Either) Accept(tokensCh *channel.TransactionChannel[option.Option[token.Token]]) error {
+func (e Either) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionChannel[option.Option[token.Token]]) error {
 	defer tokensCh.Rollback()
 
-	log.Print(e)
+	log = log.Named(e.String())
+	log.Debug("accepting")
 
 	var lastError error
 	for _, item := range e.BNFs {
-		if err := item.Accept(tokensCh.StartTx()); errors.Is(err, ErrUnexpectedToken) {
+		if err := item.Accept(log, tokensCh.StartTx()); errors.Is(err, ErrUnexpectedToken) {
 			lastError = err
+			log.Debugf("error %v, skipping", err)
 			continue
 		} else if err != nil {
+			log.Debugf("error %v, returning", err)
 			return fmt.Errorf("error in optional: %w", err)
 		}
 

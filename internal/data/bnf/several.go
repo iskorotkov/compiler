@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"go.uber.org/zap"
+
 	"github.com/iskorotkov/compiler/internal/channel"
 	"github.com/iskorotkov/compiler/internal/data/token"
 	"github.com/iskorotkov/compiler/internal/fn/option"
@@ -16,17 +18,20 @@ type Several struct {
 	BNF
 }
 
-func (s Several) Accept(tokensCh *channel.TransactionChannel[option.Option[token.Token]]) error {
+func (s Several) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionChannel[option.Option[token.Token]]) error {
 	defer tokensCh.Rollback()
 
-	log.Print(s)
+	log = log.Named(s.String())
+	log.Debug("accepting")
 
 	for {
-		if err := s.BNF.Accept(tokensCh.StartTx()); errors.Is(err, ErrUnexpectedToken) {
+		if err := s.BNF.Accept(log, tokensCh.StartTx()); errors.Is(err, ErrUnexpectedToken) {
 			tokensCh.Commit()
+			log.Debugf("%v in %v, committing tx", err, s)
 			return nil
 		} else if err != nil {
-			return fmt.Errorf("error in optional: %w", err)
+			log.Debugf("%v in %v, returning", err, s)
+			return fmt.Errorf("error in %v: %w", s, err)
 		}
 	}
 }

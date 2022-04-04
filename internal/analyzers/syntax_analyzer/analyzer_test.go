@@ -9,7 +9,22 @@ import (
 	"github.com/iskorotkov/compiler/internal/channel"
 	"github.com/iskorotkov/compiler/internal/data/token"
 	"github.com/iskorotkov/compiler/internal/fn/option"
+	"github.com/iskorotkov/compiler/internal/fn/slices"
 	"github.com/iskorotkov/compiler/internal/snapshot"
+)
+
+var (
+	header = []option.Option[token.Token]{
+		option.Ok(token.Token{ID: token.Program}),
+		option.Ok(token.Token{ID: token.UserDefined}),
+		option.Ok(token.Token{ID: token.Semicolon}),
+		option.Ok(token.Token{ID: token.Begin}),
+	}
+	footer = []option.Option[token.Token]{
+		option.Ok(token.Token{ID: token.End}),
+		option.Ok(token.Token{ID: token.Period}),
+		option.Ok(token.Token{ID: token.EOF}),
+	}
 )
 
 func TestAnalyzer(t *testing.T) {
@@ -23,15 +38,77 @@ func TestAnalyzer(t *testing.T) {
 	tests := []Test{
 		{
 			name: "empty program",
-			tokens: []option.Option[token.Token]{
-				option.Ok(token.Token{ID: token.Program}),
-				option.Ok(token.Token{ID: token.UserDefined}),
-				option.Ok(token.Token{ID: token.Semicolon}),
-				option.Ok(token.Token{ID: token.Begin}),
-				option.Ok(token.Token{ID: token.End}),
-				option.Ok(token.Token{ID: token.Period}),
-				option.Ok(token.Token{ID: token.EOF}),
-			},
+			tokens: slices.Flatten(
+				header,
+				footer,
+			),
+		},
+		{
+			name: "unsigned int literal assignment",
+			tokens: slices.Flatten(
+				header,
+				[]option.Option[token.Token]{
+					option.Ok(token.Token{ID: token.UserDefined}),
+					option.Ok(token.Token{ID: token.Assign}),
+					option.Ok(token.Token{ID: token.IntLiteral}),
+					option.Ok(token.Token{ID: token.Semicolon}),
+				},
+				footer,
+			),
+		},
+		{
+			name: "signed int literal assignment",
+			tokens: slices.Flatten(
+				header,
+				[]option.Option[token.Token]{
+					option.Ok(token.Token{ID: token.UserDefined}),
+					option.Ok(token.Token{ID: token.Assign}),
+					option.Ok(token.Token{ID: token.Minus}),
+					option.Ok(token.Token{ID: token.IntLiteral}),
+					option.Ok(token.Token{ID: token.Semicolon}),
+				},
+				footer,
+			),
+		},
+		{
+			name: "unsigned double literal assignment",
+			tokens: slices.Flatten(
+				header,
+				[]option.Option[token.Token]{
+					option.Ok(token.Token{ID: token.UserDefined}),
+					option.Ok(token.Token{ID: token.Assign}),
+					option.Ok(token.Token{ID: token.DoubleLiteral}),
+					option.Ok(token.Token{ID: token.Semicolon}),
+				},
+				footer,
+			),
+		},
+		{
+			name: "signed double literal assignment",
+			tokens: slices.Flatten(
+				header,
+				[]option.Option[token.Token]{
+					option.Ok(token.Token{ID: token.UserDefined}),
+					option.Ok(token.Token{ID: token.Assign}),
+					option.Ok(token.Token{ID: token.Minus}),
+					option.Ok(token.Token{ID: token.DoubleLiteral}),
+					option.Ok(token.Token{ID: token.Semicolon}),
+				},
+				footer,
+			),
+		},
+		{
+			name: "bool literal assignment",
+			tokens: slices.Flatten(
+				header,
+				[]option.Option[token.Token]{
+					option.Ok(token.Token{ID: token.UserDefined}),
+					option.Ok(token.Token{ID: token.Assign}),
+					option.Ok(token.Token{ID: token.BoolLiteral}),
+					option.Ok(token.Token{ID: token.Semicolon}),
+				},
+				footer,
+			),
 		},
 	}
 
