@@ -1,0 +1,56 @@
+ok: "program" at 1:1-8
+ok: " " at 1:8
+ok: "p" at 1:9
+ok: ";" at 1:10
+ok: "\n" at 1:11
+ok: "const" at 2:1-6
+ok: " " at 2:6
+ok: "PI" at 2:7-9
+ok: " " at 2:9
+ok: "=" at 2:10
+ok: " " at 2:11
+ok: "3.14" at 2:12-16
+ok: ";" at 2:16
+ok: "\n" at 2:17
+ok: "E" at 3:1
+ok: " " at 3:2
+ok: "=" at 3:3
+ok: " " at 3:4
+ok: "2.71" at 3:5-9
+ok: ";" at 3:9
+ok: "\n" at 3:10
+ok: "var" at 4:1-4
+ok: " " at 4:4
+ok: "x" at 4:5
+ok: "," at 4:6
+ok: " " at 4:7
+ok: "y" at 4:8
+ok: ":" at 4:9
+ok: " " at 4:10
+ok: "integer" at 4:11-18
+ok: ";" at 4:18
+ok: "\n" at 4:19
+ok: "begin" at 5:1-6
+ok: "\n" at 5:6
+ok: "x" at 6:1
+ok: " " at 6:2
+ok: ":=" at 6:3-5
+ok: " " at 6:5
+ok: "2" at 6:6
+ok: " " at 6:7
+ok: "*" at 6:8
+ok: " " at 6:9
+ok: "PI" at 6:10-12
+ok: " " at 6:12
+ok: "+" at 6:13
+ok: " " at 6:14
+ok: "16" at 6:15-17
+ok: " " at 6:17
+ok: "*" at 6:18
+ok: " " at 6:19
+ok: "E" at 6:20
+ok: ";" at 6:21
+ok: "\n" at 6:22
+ok: "end" at 7:1-4
+ok: "." at 7:4
+ok: "\n" at 7:5

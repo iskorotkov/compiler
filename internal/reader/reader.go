@@ -15,6 +15,10 @@ var (
 	// wordBoundaryRegex is used for finding boundaries between two literals or other boundaries.
 	// We match word boundaries so that we can extract all symbols for future analysis.
 	wordBoundaryRegex = regexp.MustCompile(`\W`)
+
+	// doubleConstantRegex is used for finding double constants.
+	doubleConstantRegex = regexp.MustCompile(`^\d+\.\d+`)
+
 	// complexOperatorRegex matches complex operators that consist of 2 characters.
 	complexOperatorRegex = regexp.MustCompile(`[<>][<>=]|:=`)
 )
@@ -83,9 +87,17 @@ func (s Reader) splitLine(input string, lineNumber literal.LineNumber, ch chan<-
 
 		boundaryStart, boundaryEnd := literal.ColNumber(boundary[0]), literal.ColNumber(boundary[1])
 
+		// Extend selection for complex operators.
 		complexBoundary := complexOperatorRegex.FindStringIndex(rest)
 		if complexBoundary != nil && boundary[0] == complexBoundary[0] {
 			boundaryEnd = literal.ColNumber(complexBoundary[1])
+		} else {
+			// Expand selection for double constants.
+			doubleConstantBoundary := doubleConstantRegex.FindStringIndex(rest)
+			if doubleConstantBoundary != nil {
+				boundaryStart = literal.ColNumber(doubleConstantBoundary[1])
+				boundaryEnd = boundaryStart + 1
+			}
 		}
 
 		if boundaryStart > 0 {

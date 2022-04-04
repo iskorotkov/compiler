@@ -112,12 +112,12 @@ func TestReader_ReadWithSnapshots(t *testing.T) {
 
 	tests := []Test{
 		{
-			name:  "sample program 1",
-			input: testdata.File1,
+			name:  "assignments program",
+			input: testdata.Assignments,
 		},
 		{
-			name:  "sample program 2",
-			input: testdata.File2,
+			name:  "constants program",
+			input: testdata.Constants,
 		},
 	}
 
