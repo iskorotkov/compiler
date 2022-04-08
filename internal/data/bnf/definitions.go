@@ -142,6 +142,7 @@ func init() {
 	}}
 
 	MultiplicativeOperand = Either{"multiplicative-operand", []BNF{
+		&FunctionUsage,
 		&Variable,
 		&Constant,
 		Sequence{"", []BNF{
@@ -149,10 +150,9 @@ func init() {
 			&Expression,
 			Token{token.ClosingParenthesis},
 		}},
-		&FunctionUsage,
 		Sequence{"", []BNF{
 			Token{token.Not},
-			FunctionUsage,
+			&MultiplicativeOperand,
 		}},
 	}}
 }
@@ -205,14 +205,19 @@ func init() {
 		Token{token.Function},
 		&FunctionName,
 		Optional{"", Sequence{"", []BNF{
-			&FormalParameters,
-			Several{"", Sequence{"", []BNF{
-				Token{token.Colon},
+			Token{token.OpeningParenthesis},
+			Optional{"", Sequence{"", []BNF{
 				&FormalParameters,
+				Several{"", Sequence{"", []BNF{
+					Token{token.Semicolon},
+					&FormalParameters,
+				}}},
 			}}},
+			Token{token.ClosingParenthesis},
 		}}},
 		Token{token.Colon},
 		&Type,
+		Token{token.Semicolon},
 	}}
 
 	FunctionDefinition = Sequence{"function-definition", []BNF{
@@ -226,10 +231,12 @@ func init() {
 		&FunctionName,
 		Optional{"", Sequence{"", []BNF{
 			Token{token.OpeningParenthesis},
-			&FactualParameter,
-			Several{"", Sequence{"", []BNF{
-				Token{token.Comma},
+			Optional{"", Sequence{"", []BNF{
 				&FactualParameter,
+				Several{"", Sequence{"", []BNF{
+					Token{token.Comma},
+					&FactualParameter,
+				}}},
 			}}},
 			Token{token.ClosingParenthesis},
 		}}},
