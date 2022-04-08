@@ -323,11 +323,11 @@ func init() {
 		&LoopOperator,
 	}}
 
-	ConditionOperator = Either{"condition operator", []BNF{
+	ConditionOperator = Either{"condition-operator", []BNF{
 		&If,
 	}}
 
-	LoopOperator = Either{"loop operator", []BNF{
+	LoopOperator = Either{"loop-operator", []BNF{
 		&For,
 		&While,
 		&Repeat,
