@@ -295,14 +295,15 @@ var (
 )
 
 func init() {
+	// TODO: Syntax analyzer is very sensitive to extra semicolons.
 	Operator = Either{"operator", []BNF{
 		&SimpleOperator,
 		&ComplexOperator,
+		&Empty,
 	}}
 
 	SimpleOperator = Either{"simple-operator", []BNF{
 		&AssignmentOperator,
-		&Empty,
 	}}
 
 	CompositeOperator = Sequence{"composite-operator", []BNF{
