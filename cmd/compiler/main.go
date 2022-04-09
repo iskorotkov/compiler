@@ -11,6 +11,7 @@ import (
 	"github.com/iskorotkov/compiler/internal/modules/syntax_analyzer"
 )
 
+//goland:noinspection GoUnusedGlobalVariable
 var log = logger.New().Named("main")
 
 func main() {

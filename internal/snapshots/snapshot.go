@@ -9,6 +9,7 @@ import (
 
 type Snapshot []string
 
+//goland:noinspection GoUnusedExportedFunction
 func New(value interface{}) Snapshot {
 	return []string{fmt.Sprintf("%v", value)}
 }
