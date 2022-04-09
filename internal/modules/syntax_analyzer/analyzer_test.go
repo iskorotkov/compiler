@@ -1,15 +1,18 @@
 package syntax_analyzer_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/iskorotkov/compiler/internal/contexts"
 	"github.com/iskorotkov/compiler/internal/data/token"
 	"github.com/iskorotkov/compiler/internal/fn/channels"
 	"github.com/iskorotkov/compiler/internal/fn/options"
 	"github.com/iskorotkov/compiler/internal/fn/slices"
 	"github.com/iskorotkov/compiler/internal/modules/syntax_analyzer"
+	"github.com/iskorotkov/compiler/internal/modules/syntax_neutralizer"
 	"github.com/iskorotkov/compiler/internal/snapshots"
 )
 
@@ -112,7 +115,7 @@ func TestAnalyzer(t *testing.T) {
 		},
 	}
 
-	analyzer := syntax_analyzer.New(0, 1)
+	analyzer := syntax_analyzer.New(0)
 
 	for _, test := range tests {
 		test := test
@@ -120,7 +123,14 @@ func TestAnalyzer(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			resCh := analyzer.Analyze(channels.FromSlice(test.tokens))
+			resCh := analyzer.Analyze(struct {
+				contexts.LoggerContext
+				contexts.NeutralizerContext
+			}{
+				LoggerContext:      contexts.NewEnvContext(context.Background()),
+				NeutralizerContext: contexts.NewNeutralizerContext(syntax_neutralizer.New(0)),
+			}, channels.FromSlice(test.tokens))
+
 			res := channels.ToSlice(resCh)
 
 			actual := snapshots.NewSlice(res)

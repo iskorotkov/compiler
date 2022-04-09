@@ -4,12 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"go.uber.org/zap"
-
-	"github.com/iskorotkov/compiler/internal/data/token"
-	"github.com/iskorotkov/compiler/internal/fn/channels"
-	"github.com/iskorotkov/compiler/internal/fn/options"
-	"github.com/iskorotkov/compiler/internal/modules/syntax_neutralizer"
+	"github.com/iskorotkov/compiler/internal/contexts"
 )
 
 var _ BNF = &Either{}
@@ -19,24 +14,29 @@ type Either struct {
 	BNFs []BNF
 }
 
-func (e Either) Accept(log *zap.SugaredLogger, tokensCh *channels.TxChannel[options.Option[token.Token]], neutralizer syntax_neutralizer.Neutralizer) error {
-	defer tokensCh.Rollback()
+func (e Either) Accept(ctx interface {
+	contexts.LoggerContext
+	contexts.TxChannelContext
+	contexts.NeutralizerContext
+}) error {
+	defer ctx.TxChannel().Rollback()
 
-	log = log.Named(e.String())
+	ctx, cancel := contexts.Scoped(ctx, e.String())
+	defer cancel()
 
 	var lastError error
 	for _, item := range e.BNFs {
-		if err := item.Accept(log, tokensCh.StartTx(), neutralizer); errors.Is(err, ErrUnexpectedToken) {
+		if err := item.Accept(ctx); errors.Is(err, ErrUnexpectedToken) {
 			lastError = err
-			log.Infof("%v in %v, skipping", err, e)
+			ctx.Logger().Infof("%v in %v, skipping", err, e)
 			continue
 		} else if err != nil {
-			log.Warnf("%v in %v, returning", err, e)
+			ctx.Logger().Warnf("%v in %v, returning", err, e)
 			return err
 		}
 
-		log.Infof("commit")
-		tokensCh.Commit()
+		ctx.Logger().Infof("commit")
+		ctx.TxChannel().Commit()
 
 		return nil
 	}

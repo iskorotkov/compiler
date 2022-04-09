@@ -33,7 +33,7 @@ func TestScanner_Scan(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			actual := channels.ToSlice(sc.Scan(channels.FromSlice(test.input)))
+			actual := channels.ToSlice(sc.Scan(nil, channels.FromSlice(test.input)))
 			s := snapshots.NewSlice(actual)
 
 			expected := snapshots.Load(test.name)

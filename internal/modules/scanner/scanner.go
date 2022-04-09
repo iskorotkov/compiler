@@ -8,7 +8,6 @@ import (
 	"github.com/iskorotkov/compiler/internal/data/literal"
 	"github.com/iskorotkov/compiler/internal/data/token"
 	"github.com/iskorotkov/compiler/internal/fn/options"
-	"github.com/iskorotkov/compiler/internal/logger"
 )
 
 var (
@@ -16,8 +15,6 @@ var (
 	doubleConstantRegex = regexp.MustCompile(`^\d+\.\d+$`)
 	boolConstantRegex   = regexp.MustCompile(`^true$|^false$`)
 	userIdentifierRegex = regexp.MustCompile(`^(?i)[a-z_]\w*$`)
-
-	log = logger.New().Named("scanner")
 )
 
 type Scanner struct {
@@ -30,7 +27,7 @@ func New(buffer int) *Scanner {
 	}
 }
 
-func (l Scanner) Scan(input <-chan options.Option[literal.Literal]) <-chan options.Option[token.Token] {
+func (l Scanner) Scan(ctx interface{}, input <-chan options.Option[literal.Literal]) <-chan options.Option[token.Token] {
 	ch := make(chan options.Option[token.Token], l.buffer)
 
 	go func() {
@@ -43,7 +40,7 @@ func (l Scanner) Scan(input <-chan options.Option[literal.Literal]) <-chan optio
 				continue
 			}
 
-			addTypedToken(lit, ch)
+			addTypedToken(ctx, lit, ch)
 		}
 
 		ch <- options.Ok(token.Token{ID: token.EOF})
@@ -52,10 +49,10 @@ func (l Scanner) Scan(input <-chan options.Option[literal.Literal]) <-chan optio
 	return ch
 }
 
-func addTypedToken(lit literal.Literal, ch chan<- options.Option[token.Token]) {
+//goland:noinspection GoUnusedParameter
+func addTypedToken(ctx interface{}, lit literal.Literal, ch chan<- options.Option[token.Token]) {
 	// Whitespace only - skip it.
 	if len(strings.TrimSpace(lit.Value)) == 0 {
-		log.Infof("skipping literal as it contains whitespace only")
 		return
 	}
 

@@ -3,12 +3,7 @@ package bnf
 import (
 	"fmt"
 
-	"go.uber.org/zap"
-
-	"github.com/iskorotkov/compiler/internal/data/token"
-	"github.com/iskorotkov/compiler/internal/fn/channels"
-	"github.com/iskorotkov/compiler/internal/fn/options"
-	"github.com/iskorotkov/compiler/internal/modules/syntax_neutralizer"
+	"github.com/iskorotkov/compiler/internal/contexts"
 )
 
 var _ BNF = &Sequence{}
@@ -18,20 +13,25 @@ type Sequence struct {
 	BNFs []BNF
 }
 
-func (s Sequence) Accept(log *zap.SugaredLogger, tokensCh *channels.TxChannel[options.Option[token.Token]], neutralizer syntax_neutralizer.Neutralizer) error {
-	defer tokensCh.Rollback()
+func (s Sequence) Accept(ctx interface {
+	contexts.LoggerContext
+	contexts.TxChannelContext
+	contexts.NeutralizerContext
+}) error {
+	defer ctx.TxChannel().Rollback()
 
-	log = log.Named(s.String())
+	ctx, cancel := contexts.Scoped(ctx, s.String())
+	defer cancel()
 
 	for _, item := range s.BNFs {
-		if err := item.Accept(log, tokensCh.StartTx(), neutralizer); err != nil {
-			log.Warnf("%v in %v, returning", err, s)
+		if err := item.Accept(ctx); err != nil {
+			ctx.Logger().Warnf("%v in %v, returning", err, s)
 			return err
 		}
 	}
 
-	log.Infof("commit")
-	tokensCh.Commit()
+	ctx.Logger().Infof("commit")
+	ctx.TxChannel().Commit()
 
 	return nil
 }

@@ -1,20 +1,21 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
 
-	"github.com/iskorotkov/compiler/internal/logger"
+	"github.com/iskorotkov/compiler/internal/contexts"
 	"github.com/iskorotkov/compiler/internal/modules/reader"
 	"github.com/iskorotkov/compiler/internal/modules/scanner"
 	"github.com/iskorotkov/compiler/internal/modules/syntax_analyzer"
+	"github.com/iskorotkov/compiler/internal/modules/syntax_neutralizer"
 )
 
-//goland:noinspection GoUnusedGlobalVariable
-var log = logger.New().Named("main")
-
 func main() {
+	ctx := contexts.NewEnvContext(context.Background())
+
 	if len(os.Args) > 1 {
 		file, err := os.OpenFile(os.Args[1], os.O_RDONLY, 0666)
 		if err != nil {
@@ -22,25 +23,30 @@ func main() {
 			os.Exit(1)
 		}
 
-		compile(file)
+		compile(ctx, file)
 
 		return
 	}
 
-	compile(os.Stdin)
+	compile(ctx, os.Stdin)
 }
 
-func compile(r io.Reader) {
+func compile(ctx contexts.FullContext, r io.Reader) {
 	buffer := 0
 
 	rd := reader.New(buffer)
-	literals := rd.Read(r)
+	literals := rd.Read(ctx, r)
 
 	sc := scanner.New(buffer)
-	tokens := sc.Scan(literals)
+	tokens := sc.Scan(ctx, literals)
 
-	sa := syntax_analyzer.New(buffer, 1)
-	syntaxConstructions := sa.Analyze(tokens)
+	neutralizer := syntax_neutralizer.New(1)
+
+	sa := syntax_analyzer.New(buffer)
+	syntaxConstructions := sa.Analyze(struct {
+		contexts.LoggerContext
+		contexts.NeutralizerContext
+	}{ctx, contexts.NewNeutralizerContext(neutralizer)}, tokens)
 
 	_, err := (<-syntaxConstructions).Unwrap()
 	if err != nil {

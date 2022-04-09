@@ -24,7 +24,7 @@ func New(maxDistance int) Neutralizer {
 	}
 }
 
-func (n *Neutralizer) Neutralize(expected token.ID, actual token.Token) (token.Token, error) {
+func (n Neutralizer) Neutralize(expected token.ID, actual token.Token) (token.Token, error) {
 	// Actual token matches expected token.
 	if expected == actual.ID {
 		return actual, nil

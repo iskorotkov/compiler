@@ -4,12 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"go.uber.org/zap"
-
-	"github.com/iskorotkov/compiler/internal/data/token"
-	"github.com/iskorotkov/compiler/internal/fn/channels"
-	"github.com/iskorotkov/compiler/internal/fn/options"
-	"github.com/iskorotkov/compiler/internal/modules/syntax_neutralizer"
+	"github.com/iskorotkov/compiler/internal/contexts"
 )
 
 var _ BNF = &Several{}
@@ -19,18 +14,23 @@ type Several struct {
 	BNF
 }
 
-func (s Several) Accept(log *zap.SugaredLogger, tokensCh *channels.TxChannel[options.Option[token.Token]], neutralizer syntax_neutralizer.Neutralizer) error {
-	defer tokensCh.Rollback()
+func (s Several) Accept(ctx interface {
+	contexts.LoggerContext
+	contexts.TxChannelContext
+	contexts.NeutralizerContext
+}) error {
+	defer ctx.TxChannel().Rollback()
 
-	log = log.Named(s.String())
+	ctx, cancel := contexts.Scoped(ctx, s.String())
+	defer cancel()
 
 	for {
-		if err := s.BNF.Accept(log, tokensCh.StartTx(), neutralizer); errors.Is(err, ErrUnexpectedToken) {
-			tokensCh.Commit()
-			log.Infof("%v in %v, committing tx", err, s)
+		if err := s.BNF.Accept(ctx); errors.Is(err, ErrUnexpectedToken) {
+			ctx.TxChannel().Commit()
+			ctx.Logger().Infof("%v in %v, committing tx", err, s)
 			return nil
 		} else if err != nil {
-			log.Warnf("%v in %v, returning", err, s)
+			ctx.Logger().Warnf("%v in %v, returning", err, s)
 			return err
 		}
 	}

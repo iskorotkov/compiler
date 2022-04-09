@@ -94,7 +94,7 @@ func TestReader_Read(t *testing.T) {
 				t.Run(test.name, func(t *testing.T) {
 					t.Parallel()
 
-					actual := channels.ToSlice(r.Read(strings.NewReader(test.input)))
+					actual := channels.ToSlice(r.Read(nil, strings.NewReader(test.input)))
 					assert.Equal(t, test.expected, actual)
 				})
 			}
@@ -128,7 +128,7 @@ func TestReader_ReadWithSnapshots(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			actual := channels.ToSlice(r.Read(strings.NewReader(test.input)))
+			actual := channels.ToSlice(r.Read(nil, strings.NewReader(test.input)))
 			s := snapshots.NewSlice(actual)
 
 			expected := snapshots.Load(test.name)

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"errors"
 	"io"
-	"os"
 	"regexp"
 
 	"github.com/iskorotkov/compiler/internal/data/literal"
@@ -33,16 +32,7 @@ func New(buffer int) *Reader {
 	}
 }
 
-func (s Reader) ReadFile(filename string) (<-chan options.Option[literal.Literal], error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.Read(file), nil
-}
-
-func (s Reader) Read(r io.Reader) <-chan options.Option[literal.Literal] {
+func (s Reader) Read(ctx interface{}, r io.Reader) <-chan options.Option[literal.Literal] {
 	ch := make(chan options.Option[literal.Literal], s.buffer)
 
 	go func() {
@@ -60,7 +50,7 @@ func (s Reader) Read(r io.Reader) <-chan options.Option[literal.Literal] {
 			}
 
 			line := scanner.Text()
-			s.splitLine(line, lineNumber, ch)
+			s.splitLine(ctx, line, lineNumber, ch)
 
 			lineNumber++
 		}
@@ -69,7 +59,8 @@ func (s Reader) Read(r io.Reader) <-chan options.Option[literal.Literal] {
 	return ch
 }
 
-func (s Reader) splitLine(input string, lineNumber literal.LineNumber, ch chan<- options.Option[literal.Literal]) {
+//goland:noinspection GoUnusedParameter
+func (s Reader) splitLine(ctx interface{}, input string, lineNumber literal.LineNumber, ch chan<- options.Option[literal.Literal]) {
 	inputLength := literal.ColNumber(len(input))
 	offset := literal.ColNumber(0)
 	rest := input
