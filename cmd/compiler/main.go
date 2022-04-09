@@ -1,20 +1,20 @@
 package main
 
 import (
-	"context"
+	stdcontext "context"
 	"fmt"
 	"io"
 	"os"
 
-	"github.com/iskorotkov/compiler/internal/contexts"
-	"github.com/iskorotkov/compiler/internal/modules/reader"
-	"github.com/iskorotkov/compiler/internal/modules/scanner"
-	"github.com/iskorotkov/compiler/internal/modules/syntax_analyzer"
-	"github.com/iskorotkov/compiler/internal/modules/syntax_neutralizer"
+	"github.com/iskorotkov/compiler/internal/context"
+	"github.com/iskorotkov/compiler/internal/module/reader"
+	"github.com/iskorotkov/compiler/internal/module/scanner"
+	"github.com/iskorotkov/compiler/internal/module/syntax_analyzer"
+	"github.com/iskorotkov/compiler/internal/module/syntax_neutralizer"
 )
 
 func main() {
-	ctx := contexts.NewEnvContext(context.Background())
+	ctx := context.NewEnvContext(stdcontext.Background())
 
 	if len(os.Args) > 1 {
 		file, err := os.OpenFile(os.Args[1], os.O_RDONLY, 0666)
@@ -31,7 +31,7 @@ func main() {
 	compile(ctx, os.Stdin)
 }
 
-func compile(ctx contexts.FullContext, r io.Reader) {
+func compile(ctx context.FullContext, r io.Reader) {
 	buffer := 0
 
 	rd := reader.New(buffer)
@@ -44,9 +44,9 @@ func compile(ctx contexts.FullContext, r io.Reader) {
 
 	sa := syntax_analyzer.New(buffer)
 	syntaxConstructions := sa.Analyze(struct {
-		contexts.LoggerContext
-		contexts.NeutralizerContext
-	}{ctx, contexts.NewNeutralizerContext(neutralizer)}, tokens)
+		context.LoggerContext
+		context.NeutralizerContext
+	}{ctx, context.NewNeutralizerContext(neutralizer)}, tokens)
 
 	_, err := (<-syntaxConstructions).Unwrap()
 	if err != nil {

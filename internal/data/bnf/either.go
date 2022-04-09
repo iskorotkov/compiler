@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/iskorotkov/compiler/internal/contexts"
+	"github.com/iskorotkov/compiler/internal/context"
 )
 
 var _ BNF = &Either{}
@@ -15,13 +15,13 @@ type Either struct {
 }
 
 func (e Either) Accept(ctx interface {
-	contexts.LoggerContext
-	contexts.TxChannelContext
-	contexts.NeutralizerContext
+	context.LoggerContext
+	context.TxChannelContext
+	context.NeutralizerContext
 }) error {
 	defer ctx.TxChannel().Rollback()
 
-	ctx, cancel := contexts.Scoped(ctx, e.String())
+	ctx, cancel := context.Scoped(ctx, e.String())
 	defer cancel()
 
 	var lastError error

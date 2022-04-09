@@ -1,7 +1,7 @@
-package contexts
+package context
 
 import (
-	"github.com/iskorotkov/compiler/internal/modules/syntax_neutralizer"
+	"github.com/iskorotkov/compiler/internal/module/syntax_neutralizer"
 )
 
 var _ NeutralizerContext = (*neutralizerContext)(nil)

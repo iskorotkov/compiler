@@ -7,10 +7,10 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/iskorotkov/compiler/internal/data/literal"
-	"github.com/iskorotkov/compiler/internal/fn/channels"
-	"github.com/iskorotkov/compiler/internal/fn/options"
-	"github.com/iskorotkov/compiler/internal/modules/scanner"
-	"github.com/iskorotkov/compiler/internal/snapshots"
+	"github.com/iskorotkov/compiler/internal/fn/channel"
+	"github.com/iskorotkov/compiler/internal/fn/option"
+	"github.com/iskorotkov/compiler/internal/module/scanner"
+	"github.com/iskorotkov/compiler/internal/snapshot"
 )
 
 func TestScanner_Scan(t *testing.T) {
@@ -18,7 +18,7 @@ func TestScanner_Scan(t *testing.T) {
 
 	tests := []struct {
 		name  string
-		input []options.Option[literal.Literal]
+		input []option.Option[literal.Literal]
 	}{
 		{
 			name:  "simple for loop",
@@ -33,10 +33,10 @@ func TestScanner_Scan(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			actual := channels.ToSlice(sc.Scan(nil, channels.FromSlice(test.input)))
-			s := snapshots.NewSlice(actual)
+			actual := channel.ToSlice(sc.Scan(nil, channel.FromSlice(test.input)))
+			s := snapshot.NewSlice(actual)
 
-			expected := snapshots.Load(test.name)
+			expected := snapshot.Load(test.name)
 			if !expected.Available() {
 				s.Save(test.name)
 				return
@@ -47,10 +47,10 @@ func TestScanner_Scan(t *testing.T) {
 	}
 }
 
-func fromString(s string) []options.Option[literal.Literal] {
-	var literals []options.Option[literal.Literal]
+func fromString(s string) []option.Option[literal.Literal] {
+	var literals []option.Option[literal.Literal]
 	for _, part := range strings.Split(s, " ") {
-		literals = append(literals, options.Ok(literal.New(part, 0, 0, 0)))
+		literals = append(literals, option.Ok(literal.New(part, 0, 0, 0)))
 	}
 
 	return literals

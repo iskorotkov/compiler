@@ -1,4 +1,4 @@
-package contexts
+package context
 
 func Scoped[T LoggerContext](ctx T, scope string) (T, func()) {
 	old := ctx.Logger()

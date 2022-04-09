@@ -1,17 +1,17 @@
-package channels_test
+package channel_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/iskorotkov/compiler/internal/fn/channels"
+	"github.com/iskorotkov/compiler/internal/fn/channel"
 )
 
 func TestChannelWrapping(t *testing.T) {
 	t.Parallel()
 
-	ch := channels.NewTxChannel(channels.FromSlice([]int{1, 2, 3}))
+	ch := channel.NewTxChannel(channel.FromSlice([]int{1, 2, 3}))
 	assert.True(t, ch.Open())
 
 	assert.Equal(t, 1, ch.Read())
@@ -27,7 +27,7 @@ func TestChannelWrapping(t *testing.T) {
 func TestCommit(t *testing.T) {
 	t.Parallel()
 
-	ch := channels.NewTxChannel(channels.FromSlice([]int{1, 2, 3}))
+	ch := channel.NewTxChannel(channel.FromSlice([]int{1, 2, 3}))
 	assert.Equal(t, 1, ch.Read())
 	assert.Equal(t, 2, ch.Read())
 	assert.Equal(t, 3, ch.Read())
@@ -40,7 +40,7 @@ func TestCommit(t *testing.T) {
 func TestRollback(t *testing.T) {
 	t.Parallel()
 
-	ch := channels.NewTxChannel(channels.FromSlice([]int{1, 2, 3}))
+	ch := channel.NewTxChannel(channel.FromSlice([]int{1, 2, 3}))
 	assert.Equal(t, 1, ch.Read())
 	assert.Equal(t, 2, ch.Read())
 	assert.Equal(t, 3, ch.Read())
@@ -58,7 +58,7 @@ func TestRollback(t *testing.T) {
 func TestPartialRollback(t *testing.T) {
 	t.Parallel()
 
-	ch := channels.NewTxChannel(channels.FromSlice([]int{1, 2, 3}))
+	ch := channel.NewTxChannel(channel.FromSlice([]int{1, 2, 3}))
 	assert.Equal(t, 1, ch.Read())
 	assert.Equal(t, 2, ch.Read())
 	assert.True(t, ch.Open())
@@ -75,7 +75,7 @@ func TestPartialRollback(t *testing.T) {
 func TestCommitRollback(t *testing.T) {
 	t.Parallel()
 
-	ch := channels.NewTxChannel(channels.FromSlice([]int{1, 2, 3}))
+	ch := channel.NewTxChannel(channel.FromSlice([]int{1, 2, 3}))
 	assert.Equal(t, 1, ch.Read())
 	assert.Equal(t, 2, ch.Read())
 	assert.True(t, ch.Open())
@@ -93,7 +93,7 @@ func TestCommitRollback(t *testing.T) {
 func TestNestedTransactions(t *testing.T) {
 	t.Parallel()
 
-	ch := channels.NewTxChannel(channels.FromSlice([]int{1, 2, 3}))
+	ch := channel.NewTxChannel(channel.FromSlice([]int{1, 2, 3}))
 	assert.Equal(t, 1, ch.Read())
 	assert.True(t, ch.Open())
 

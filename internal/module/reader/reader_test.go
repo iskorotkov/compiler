@@ -7,10 +7,10 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/iskorotkov/compiler/internal/data/literal"
-	"github.com/iskorotkov/compiler/internal/fn/channels"
-	"github.com/iskorotkov/compiler/internal/fn/options"
-	"github.com/iskorotkov/compiler/internal/modules/reader"
-	"github.com/iskorotkov/compiler/internal/snapshots"
+	"github.com/iskorotkov/compiler/internal/fn/channel"
+	"github.com/iskorotkov/compiler/internal/fn/option"
+	"github.com/iskorotkov/compiler/internal/module/reader"
+	"github.com/iskorotkov/compiler/internal/snapshot"
 	"github.com/iskorotkov/compiler/testdata/programs"
 )
 
@@ -20,7 +20,7 @@ func TestReader_Read(t *testing.T) {
 	type Test struct {
 		name     string
 		input    string
-		expected []options.Option[literal.Literal]
+		expected []option.Option[literal.Literal]
 	}
 
 	type Config struct {
@@ -32,18 +32,18 @@ func TestReader_Read(t *testing.T) {
 		{
 			name:  "sequence without whitespace",
 			input: "123;,zcxc,t,,czxc,",
-			expected: []options.Option[literal.Literal]{
-				options.Ok(literal.New("123", 1, 1, 4)),
-				options.Ok(literal.New(";", 1, 4, 5)),
-				options.Ok(literal.New(",", 1, 5, 6)),
-				options.Ok(literal.New("zcxc", 1, 6, 10)),
-				options.Ok(literal.New(",", 1, 10, 11)),
-				options.Ok(literal.New("t", 1, 11, 12)),
-				options.Ok(literal.New(",", 1, 12, 13)),
-				options.Ok(literal.New(",", 1, 13, 14)),
-				options.Ok(literal.New("czxc", 1, 14, 18)),
-				options.Ok(literal.New(",", 1, 18, 19)),
-				options.Ok(literal.New("\n", 1, 19, 20)),
+			expected: []option.Option[literal.Literal]{
+				option.Ok(literal.New("123", 1, 1, 4)),
+				option.Ok(literal.New(";", 1, 4, 5)),
+				option.Ok(literal.New(",", 1, 5, 6)),
+				option.Ok(literal.New("zcxc", 1, 6, 10)),
+				option.Ok(literal.New(",", 1, 10, 11)),
+				option.Ok(literal.New("t", 1, 11, 12)),
+				option.Ok(literal.New(",", 1, 12, 13)),
+				option.Ok(literal.New(",", 1, 13, 14)),
+				option.Ok(literal.New("czxc", 1, 14, 18)),
+				option.Ok(literal.New(",", 1, 18, 19)),
+				option.Ok(literal.New("\n", 1, 19, 20)),
 			},
 		},
 		{
@@ -54,16 +54,16 @@ func TestReader_Read(t *testing.T) {
 		{
 			name:  "sequence with strange whitespace",
 			input: "asd\t\nsa\r\na__sd21s\v123",
-			expected: []options.Option[literal.Literal]{
-				options.Ok(literal.New("asd", 1, 1, 4)),
-				options.Ok(literal.New("\t", 1, 4, 5)),
-				options.Ok(literal.New("\n", 1, 5, 6)),
-				options.Ok(literal.New("sa", 2, 1, 3)),
-				options.Ok(literal.New("\n", 2, 3, 4)),
-				options.Ok(literal.New("a__sd21s", 3, 1, 9)),
-				options.Ok(literal.New("\v", 3, 9, 10)),
-				options.Ok(literal.New("123", 3, 10, 13)),
-				options.Ok(literal.New("\n", 3, 13, 14)),
+			expected: []option.Option[literal.Literal]{
+				option.Ok(literal.New("asd", 1, 1, 4)),
+				option.Ok(literal.New("\t", 1, 4, 5)),
+				option.Ok(literal.New("\n", 1, 5, 6)),
+				option.Ok(literal.New("sa", 2, 1, 3)),
+				option.Ok(literal.New("\n", 2, 3, 4)),
+				option.Ok(literal.New("a__sd21s", 3, 1, 9)),
+				option.Ok(literal.New("\v", 3, 9, 10)),
+				option.Ok(literal.New("123", 3, 10, 13)),
+				option.Ok(literal.New("\n", 3, 13, 14)),
 			},
 		},
 	}
@@ -94,7 +94,7 @@ func TestReader_Read(t *testing.T) {
 				t.Run(test.name, func(t *testing.T) {
 					t.Parallel()
 
-					actual := channels.ToSlice(r.Read(nil, strings.NewReader(test.input)))
+					actual := channel.ToSlice(r.Read(nil, strings.NewReader(test.input)))
 					assert.Equal(t, test.expected, actual)
 				})
 			}
@@ -128,10 +128,10 @@ func TestReader_ReadWithSnapshots(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			actual := channels.ToSlice(r.Read(nil, strings.NewReader(test.input)))
-			s := snapshots.NewSlice(actual)
+			actual := channel.ToSlice(r.Read(nil, strings.NewReader(test.input)))
+			s := snapshot.NewSlice(actual)
 
-			expected := snapshots.Load(test.name)
+			expected := snapshot.Load(test.name)
 			if !expected.Available() {
 				s.Save(test.name)
 				return

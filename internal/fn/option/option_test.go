@@ -1,4 +1,4 @@
-package options_test
+package option_test
 
 import (
 	"fmt"
@@ -6,13 +6,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/iskorotkov/compiler/internal/fn/options"
+	"github.com/iskorotkov/compiler/internal/fn/option"
 )
 
 func TestOptionWithOk(t *testing.T) {
 	t.Parallel()
 
-	opt := options.Ok(123)
+	opt := option.Ok(123)
 
 	assert.Equal(t, "ok: 123", opt.String())
 }
@@ -20,7 +20,7 @@ func TestOptionWithOk(t *testing.T) {
 func TestOptionWithErr(t *testing.T) {
 	t.Parallel()
 
-	opt := options.Err[int](fmt.Errorf("test error"))
+	opt := option.Err[int](fmt.Errorf("test error"))
 
 	assert.Equal(t, "err: test error", opt.String())
 }

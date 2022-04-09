@@ -1,4 +1,4 @@
-package contexts
+package context
 
 import (
 	"context"
@@ -6,9 +6,9 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/iskorotkov/compiler/internal/data/token"
-	"github.com/iskorotkov/compiler/internal/fn/channels"
-	"github.com/iskorotkov/compiler/internal/fn/options"
-	"github.com/iskorotkov/compiler/internal/modules/syntax_neutralizer"
+	"github.com/iskorotkov/compiler/internal/fn/channel"
+	"github.com/iskorotkov/compiler/internal/fn/option"
+	"github.com/iskorotkov/compiler/internal/module/syntax_neutralizer"
 )
 
 type FullContext interface {
@@ -28,7 +28,7 @@ type ErrorsContext interface {
 }
 
 type TxChannelContext interface {
-	TxChannel() *channels.TxChannel[options.Option[token.Token]]
+	TxChannel() *channel.TxChannel[option.Option[token.Token]]
 }
 
 type NeutralizerContext interface {

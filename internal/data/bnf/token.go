@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/iskorotkov/compiler/internal/contexts"
+	"github.com/iskorotkov/compiler/internal/context"
 	"github.com/iskorotkov/compiler/internal/data/token"
-	"github.com/iskorotkov/compiler/internal/modules/syntax_neutralizer"
+	"github.com/iskorotkov/compiler/internal/module/syntax_neutralizer"
 )
 
 var _ BNF = &Token{}
@@ -16,13 +16,13 @@ type Token struct {
 }
 
 func (tk Token) Accept(ctx interface {
-	contexts.LoggerContext
-	contexts.TxChannelContext
-	contexts.NeutralizerContext
+	context.LoggerContext
+	context.TxChannelContext
+	context.NeutralizerContext
 }) error {
 	defer ctx.TxChannel().Rollback()
 
-	ctx, cancel := contexts.Scoped(ctx, tk.String())
+	ctx, cancel := context.Scoped(ctx, tk.String())
 	defer cancel()
 
 	t, err := ctx.TxChannel().Read().Unwrap()

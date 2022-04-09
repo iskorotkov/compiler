@@ -1,4 +1,4 @@
-package slices
+package slice
 
 func Flatten[T any](slices ...[]T) []T {
 	var res []T

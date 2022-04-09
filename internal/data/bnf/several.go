@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/iskorotkov/compiler/internal/contexts"
+	"github.com/iskorotkov/compiler/internal/context"
 )
 
 var _ BNF = &Several{}
@@ -15,13 +15,13 @@ type Several struct {
 }
 
 func (s Several) Accept(ctx interface {
-	contexts.LoggerContext
-	contexts.TxChannelContext
-	contexts.NeutralizerContext
+	context.LoggerContext
+	context.TxChannelContext
+	context.NeutralizerContext
 }) error {
 	defer ctx.TxChannel().Rollback()
 
-	ctx, cancel := contexts.Scoped(ctx, s.String())
+	ctx, cancel := context.Scoped(ctx, s.String())
 	defer cancel()
 
 	for {
