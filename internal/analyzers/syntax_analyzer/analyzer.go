@@ -1,6 +1,7 @@
 package syntax_analyzer
 
 import (
+	"github.com/iskorotkov/compiler/internal/analyzers/syntax_neutralizer"
 	"github.com/iskorotkov/compiler/internal/channel"
 	"github.com/iskorotkov/compiler/internal/data/bnf"
 	"github.com/iskorotkov/compiler/internal/data/token"
@@ -11,12 +12,14 @@ import (
 var log = logger.New().Named("syntax_analyzer")
 
 type SyntaxAnalyzer struct {
-	buffer int
+	buffer      int
+	neutralizer syntax_neutralizer.Neutralizer
 }
 
-func New(buffer int) *SyntaxAnalyzer {
+func New(buffer int, neutralizationMaxDistance int) *SyntaxAnalyzer {
 	return &SyntaxAnalyzer{
-		buffer: buffer,
+		buffer:      buffer,
+		neutralizer: syntax_neutralizer.New(neutralizationMaxDistance),
 	}
 }
 
@@ -26,17 +29,17 @@ func (a SyntaxAnalyzer) Analyze(input <-chan option.Option[token.Token]) <-chan 
 	go func() {
 		defer close(ch)
 
-		log.Debugf("syntax analysis started")
+		log.Infof("syntax analysis started")
 
 		tx := channel.NewTransactionChannel(input)
 
-		if err := bnf.Program.Accept(log, tx); err != nil {
-			log.Debugf("error during syntax analysis: %v", err)
+		if err := bnf.Program.Accept(log, tx, a.neutralizer); err != nil {
+			log.Errorf("error during syntax analysis: %v", err)
 			ch <- option.Err[bnf.BNF](err)
 			return
 		}
 
-		log.Debugf("syntax analysis succeeded")
+		log.Infof("syntax analysis succeeded")
 		ch <- option.Ok[bnf.BNF](bnf.Program)
 	}()
 

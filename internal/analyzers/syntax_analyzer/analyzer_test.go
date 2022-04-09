@@ -112,7 +112,7 @@ func TestAnalyzer(t *testing.T) {
 		},
 	}
 
-	analyzer := syntax_analyzer.New(0)
+	analyzer := syntax_analyzer.New(0, 1)
 
 	for _, test := range tests {
 		test := test

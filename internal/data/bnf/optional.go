@@ -6,6 +6,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/iskorotkov/compiler/internal/analyzers/syntax_neutralizer"
 	"github.com/iskorotkov/compiler/internal/channel"
 	"github.com/iskorotkov/compiler/internal/data/token"
 	"github.com/iskorotkov/compiler/internal/fn/option"
@@ -18,20 +19,20 @@ type Optional struct {
 	BNF
 }
 
-func (o Optional) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionChannel[option.Option[token.Token]]) error {
+func (o Optional) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionChannel[option.Option[token.Token]], neutralizer syntax_neutralizer.Neutralizer) error {
 	defer tokensCh.Rollback()
 
 	log = log.Named(o.String())
 
-	if err := o.BNF.Accept(log, tokensCh.StartTx()); errors.Is(err, ErrUnexpectedToken) {
-		log.Debugf("%v in %v, rollback tx", err, o)
+	if err := o.BNF.Accept(log, tokensCh.StartTx(), neutralizer); errors.Is(err, ErrUnexpectedToken) {
+		log.Infof("%v in %v, rollback tx", err, o)
 		return nil
 	} else if err != nil {
-		log.Debugf("%v in %v, returning", err, o)
+		log.Warnf("%v in %v, returning", err, o)
 		return err
 	}
 
-	log.Debugf("commit")
+	log.Infof("commit")
 	tokensCh.Commit()
 
 	return nil

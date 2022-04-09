@@ -6,6 +6,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/iskorotkov/compiler/internal/analyzers/syntax_neutralizer"
 	"github.com/iskorotkov/compiler/internal/channel"
 	"github.com/iskorotkov/compiler/internal/data/token"
 	"github.com/iskorotkov/compiler/internal/fn/option"
@@ -18,23 +19,23 @@ type Either struct {
 	BNFs []BNF
 }
 
-func (e Either) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionChannel[option.Option[token.Token]]) error {
+func (e Either) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionChannel[option.Option[token.Token]], neutralizer syntax_neutralizer.Neutralizer) error {
 	defer tokensCh.Rollback()
 
 	log = log.Named(e.String())
 
 	var lastError error
 	for _, item := range e.BNFs {
-		if err := item.Accept(log, tokensCh.StartTx()); errors.Is(err, ErrUnexpectedToken) {
+		if err := item.Accept(log, tokensCh.StartTx(), neutralizer); errors.Is(err, ErrUnexpectedToken) {
 			lastError = err
-			log.Debugf("%v in %v, skipping", err, e)
+			log.Infof("%v in %v, skipping", err, e)
 			continue
 		} else if err != nil {
-			log.Debugf("%v in %v, returning", err, e)
+			log.Warnf("%v in %v, returning", err, e)
 			return err
 		}
 
-		log.Debugf("commit")
+		log.Infof("commit")
 		tokensCh.Commit()
 
 		return nil

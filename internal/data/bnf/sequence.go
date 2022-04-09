@@ -5,6 +5,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/iskorotkov/compiler/internal/analyzers/syntax_neutralizer"
 	"github.com/iskorotkov/compiler/internal/channel"
 	"github.com/iskorotkov/compiler/internal/data/token"
 	"github.com/iskorotkov/compiler/internal/fn/option"
@@ -17,19 +18,19 @@ type Sequence struct {
 	BNFs []BNF
 }
 
-func (s Sequence) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionChannel[option.Option[token.Token]]) error {
+func (s Sequence) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionChannel[option.Option[token.Token]], neutralizer syntax_neutralizer.Neutralizer) error {
 	defer tokensCh.Rollback()
 
 	log = log.Named(s.String())
 
 	for _, item := range s.BNFs {
-		if err := item.Accept(log, tokensCh.StartTx()); err != nil {
-			log.Debugf("%v in %v, returning", err, s)
+		if err := item.Accept(log, tokensCh.StartTx(), neutralizer); err != nil {
+			log.Warnf("%v in %v, returning", err, s)
 			return err
 		}
 	}
 
-	log.Debugf("commit")
+	log.Infof("commit")
 	tokensCh.Commit()
 
 	return nil

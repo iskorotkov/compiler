@@ -55,7 +55,7 @@ func (l Scanner) Scan(input <-chan option.Option[literal.Literal]) <-chan option
 func addTypedToken(lit literal.Literal, ch chan<- option.Option[token.Token]) {
 	// Whitespace only - skip it.
 	if len(strings.TrimSpace(lit.Value)) == 0 {
-		log.Debugf("skipping literal as it contains whitespace only")
+		log.Infof("skipping literal as it contains whitespace only")
 		return
 	}
 

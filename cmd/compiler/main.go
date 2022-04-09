@@ -38,7 +38,7 @@ func compile(r io.Reader) {
 	sc := scanner.New(buffer)
 	tokens := sc.Scan(literals)
 
-	sa := syntax_analyzer.New(buffer)
+	sa := syntax_analyzer.New(buffer, 1)
 	syntaxConstructions := sa.Analyze(tokens)
 
 	_, err := (<-syntaxConstructions).Unwrap()
