@@ -5,10 +5,10 @@ import (
 	"io"
 	"os"
 
-	"github.com/iskorotkov/compiler/internal/analyzers/scanner"
-	"github.com/iskorotkov/compiler/internal/analyzers/syntax_analyzer"
 	"github.com/iskorotkov/compiler/internal/logger"
-	"github.com/iskorotkov/compiler/internal/reader"
+	"github.com/iskorotkov/compiler/internal/modules/reader"
+	"github.com/iskorotkov/compiler/internal/modules/scanner"
+	"github.com/iskorotkov/compiler/internal/modules/syntax_analyzer"
 )
 
 var log = logger.New().Named("main")

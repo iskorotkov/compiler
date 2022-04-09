@@ -6,10 +6,10 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/iskorotkov/compiler/internal/analyzers/syntax_neutralizer"
-	"github.com/iskorotkov/compiler/internal/channel"
 	"github.com/iskorotkov/compiler/internal/data/token"
-	"github.com/iskorotkov/compiler/internal/fn/option"
+	"github.com/iskorotkov/compiler/internal/fn/channels"
+	"github.com/iskorotkov/compiler/internal/fn/options"
+	"github.com/iskorotkov/compiler/internal/modules/syntax_neutralizer"
 )
 
 var _ BNF = &Several{}
@@ -19,7 +19,7 @@ type Several struct {
 	BNF
 }
 
-func (s Several) Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionChannel[option.Option[token.Token]], neutralizer syntax_neutralizer.Neutralizer) error {
+func (s Several) Accept(log *zap.SugaredLogger, tokensCh *channels.TxChannel[options.Option[token.Token]], neutralizer syntax_neutralizer.Neutralizer) error {
 	defer tokensCh.Rollback()
 
 	log = log.Named(s.String())

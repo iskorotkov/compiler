@@ -1,10 +1,10 @@
-package channel
+package channels
 
 import (
 	"sync"
 )
 
-type TransactionChannel[T any] struct {
+type TxChannel[T any] struct {
 	sourceCh <-chan T
 
 	transactions [][]T
@@ -13,14 +13,14 @@ type TransactionChannel[T any] struct {
 	m            sync.Mutex
 }
 
-func NewTransactionChannel[T any](ch <-chan T) *TransactionChannel[T] {
-	return &TransactionChannel[T]{
+func NewTxChannel[T any](ch <-chan T) *TxChannel[T] {
+	return &TxChannel[T]{
 		sourceCh: ch,
 	}
 }
 
 // Commit commits all reads and starts a new transaction.
-func (c *TransactionChannel[T]) Commit() {
+func (c *TxChannel[T]) Commit() {
 	c.m.Lock()
 	defer c.m.Unlock()
 
@@ -32,7 +32,7 @@ func (c *TransactionChannel[T]) Commit() {
 }
 
 // Rollback adds values from ongoing transaction to the rollback list and starts a new transaction.
-func (c *TransactionChannel[T]) Rollback() {
+func (c *TxChannel[T]) Rollback() {
 	c.m.Lock()
 	defer c.m.Unlock()
 
@@ -49,7 +49,7 @@ func (c *TransactionChannel[T]) Rollback() {
 }
 
 // Read reads from the rollback list or from source channel.
-func (c *TransactionChannel[T]) Read() T {
+func (c *TxChannel[T]) Read() T {
 	c.m.Lock()
 	defer c.m.Unlock()
 
@@ -80,7 +80,7 @@ func (c *TransactionChannel[T]) Read() T {
 }
 
 // Open checks whether the channel has rollback values or if the source channel is open.
-func (c *TransactionChannel[T]) Open() bool {
+func (c *TxChannel[T]) Open() bool {
 	c.m.Lock()
 	defer c.m.Unlock()
 
@@ -103,7 +103,7 @@ func (c *TransactionChannel[T]) Open() bool {
 }
 
 // StartTx starts a new nested transaction.
-func (c *TransactionChannel[T]) StartTx() *TransactionChannel[T] {
+func (c *TxChannel[T]) StartTx() *TxChannel[T] {
 	c.transactions = append(c.transactions, []T{})
 	return c
 }

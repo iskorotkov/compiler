@@ -1,4 +1,4 @@
-package testdata
+package programs
 
 import _ "embed"
 

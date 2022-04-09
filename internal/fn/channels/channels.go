@@ -1,4 +1,4 @@
-package channel
+package channels
 
 func FromSlice[T any](values []T) <-chan T {
 	c := make(chan T, len(values))
