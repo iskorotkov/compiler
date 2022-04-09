@@ -3,7 +3,6 @@ package syntax_neutralizer
 import (
 	"errors"
 	"fmt"
-	"math/rand"
 
 	"github.com/agnivade/levenshtein"
 
@@ -32,36 +31,26 @@ func (n *Neutralizer) Neutralize(expected token.ID, actual token.Token) (token.T
 	}
 
 	switch expected {
-	case token.Unknown:
-		return actual, fmt.Errorf("expecting unknown token: %w", UnfixableError)
-	case token.UserDefined:
-		actual.ID = token.UserDefined
-		actual.Value = fmt.Sprintf("var%d", rand.Int())
-		return actual, fmt.Errorf("expected %v, got %v: %w", expected, actual, FixableError)
-	case token.EOF:
+	case token.Unknown, token.UserDefined, token.EOF, token.IntLiteral, token.DoubleLiteral, token.BoolLiteral:
 		return actual, fmt.Errorf("expecting %v, got %v: %w", expected, actual, UnfixableError)
-	case token.IntLiteral:
-		actual.ID = token.IntLiteral
-		actual.Value = "0"
-		return actual, fmt.Errorf("expected %v, got %v: %w", expected, actual, FixableError)
-	case token.DoubleLiteral:
-		actual.ID = token.DoubleLiteral
-		actual.Value = "0.0"
-		return actual, fmt.Errorf("expected %v, got %v: %w", expected, actual, FixableError)
-	case token.BoolLiteral:
-		actual.ID = token.BoolLiteral
-		actual.Value = "false"
-		return actual, fmt.Errorf("expected %v, got %v: %w", expected, actual, FixableError)
 	default:
 		expectedTokenValue := token.ByID(expected)
 
-		dist := levenshtein.ComputeDistance(expectedTokenValue, actual.Value)
-		if dist <= n.maxDistance {
-			actual.ID = expected
-			actual.Value = expectedTokenValue
-			return actual, fmt.Errorf("expected %v, got %v: %w", expected, actual, FixableError)
+		// Avoid overwriting entire token value.
+		if len(expectedTokenValue) < 3 || len(expectedTokenValue) <= n.maxDistance {
+			return actual, fmt.Errorf("expected %v, got %v: %w", expected, actual, UnfixableError)
 		}
 
-		return actual, fmt.Errorf("expected %v, got %v: %w", expected, actual, UnfixableError)
+		dist := levenshtein.ComputeDistance(expectedTokenValue, actual.Value)
+		if dist > n.maxDistance {
+			return actual, fmt.Errorf("expected %v, got %v: %w", expected, actual, UnfixableError)
+		}
+
+		// TODO: Store info about neutralized errors somewhere.
+		// TODO: Fix typos in "end" keyword.
+		actual.ID = expected
+		actual.Value = expectedTokenValue
+
+		return actual, fmt.Errorf("expected %v, got %v: %w", expected, actual, FixableError)
 	}
 }

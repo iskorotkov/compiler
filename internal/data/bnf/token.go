@@ -1,6 +1,7 @@
 package bnf
 
 import (
+	"errors"
 	"fmt"
 
 	"go.uber.org/zap"
@@ -28,9 +29,14 @@ func (tk Token) Accept(log *zap.SugaredLogger, tokensCh *channels.TxChannel[opti
 		return fmt.Errorf("token error: %v", err)
 	}
 
-	if tk.ID != t.ID {
-		log.Warnf("expected %v, got %v, returning", tk, t.ID)
-		return fmt.Errorf("%v: expected %q, got %q: %w", t.Literal, tk, t.ID, ErrUnexpectedToken)
+	_, err = neutralizer.Neutralize(tk.ID, t)
+	if err != nil {
+		if errors.Is(err, syntax_neutralizer.UnfixableError) {
+			log.Warnf("unfixable syntax error: %v", err)
+			return fmt.Errorf("%v: expected %q, got %q: %w", t.Literal, tk, t.ID, ErrUnexpectedToken)
+		}
+
+		log.Infof("fixed syntax error: %v", err)
 	}
 
 	log.Infof("commit")
