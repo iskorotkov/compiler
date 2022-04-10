@@ -21,7 +21,7 @@ func (e Either) Accept(ctx interface {
 }) error {
 	defer ctx.TxChannel().Rollback()
 
-	ctx, cancel := context.Scoped(ctx, e.String())
+	ctx, cancel := context.Scoped(ctx, e.Name)
 	defer cancel()
 
 	var lastError error

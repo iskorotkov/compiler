@@ -20,7 +20,7 @@ func (s Sequence) Accept(ctx interface {
 }) error {
 	defer ctx.TxChannel().Rollback()
 
-	ctx, cancel := context.Scoped(ctx, s.String())
+	ctx, cancel := context.Scoped(ctx, s.Name)
 	defer cancel()
 
 	for _, item := range s.BNFs {

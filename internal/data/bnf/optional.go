@@ -21,7 +21,7 @@ func (o Optional) Accept(ctx interface {
 }) error {
 	defer ctx.TxChannel().Rollback()
 
-	ctx, cancel := context.Scoped(ctx, o.String())
+	ctx, cancel := context.Scoped(ctx, o.Name)
 	defer cancel()
 
 	if err := o.BNF.Accept(ctx); errors.Is(err, ErrUnexpectedToken) {
