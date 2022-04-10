@@ -14,7 +14,7 @@ type prodContext struct {
 	errors []error
 }
 
-func (p *prodContext) SetLogger(logger *zap.SugaredLogger) {
+func (p *prodContext) setLogger(logger *zap.SugaredLogger) {
 	p.logger = logger
 }
 

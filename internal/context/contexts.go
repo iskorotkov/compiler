@@ -19,7 +19,7 @@ type FullContext interface {
 
 type LoggerContext interface {
 	Logger() *zap.SugaredLogger
-	SetLogger(logger *zap.SugaredLogger)
+	setLogger(logger *zap.SugaredLogger)
 }
 
 type ErrorsContext interface {

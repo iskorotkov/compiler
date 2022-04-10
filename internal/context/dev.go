@@ -15,7 +15,7 @@ type devContext struct {
 	errors []error
 }
 
-func (d *devContext) SetLogger(logger *zap.SugaredLogger) {
+func (d *devContext) setLogger(logger *zap.SugaredLogger) {
 	d.logger = logger
 }
 
