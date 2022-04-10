@@ -17,7 +17,7 @@ func init() {
 		Token{ID: token.Then},
 		&Operator,
 		Optional{BNF: Sequence{BNFs: []BNF{
-			Token{token.Else},
+			Token{ID: token.Else},
 			&Operator,
 		}}},
 	}}
