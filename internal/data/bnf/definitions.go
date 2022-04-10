@@ -11,12 +11,12 @@ var (
 )
 
 func init() {
-	If = Sequence{"if", []BNF{
-		Token{token.If},
+	If = Sequence{Name: "if", BNFs: []BNF{
+		Token{ID: token.If},
 		&Expression,
-		Token{token.Then},
+		Token{ID: token.Then},
 		&Operator,
-		Optional{"", Sequence{"", []BNF{
+		Optional{BNF: Sequence{BNFs: []BNF{
 			Token{token.Else},
 			&Operator,
 		}}},
@@ -36,45 +36,45 @@ var (
 )
 
 func init() {
-	Sign = Either{"sign", []BNF{
-		Token{token.Plus},
-		Token{token.Minus},
+	Sign = Either{Name: "sign", BNFs: []BNF{
+		Token{ID: token.Plus},
+		Token{ID: token.Minus},
 		&Empty,
 	}}
 
-	IntLiteral = Token{token.IntLiteral}
+	IntLiteral = Token{ID: token.IntLiteral}
 
-	DoubleLiteral = Token{token.DoubleLiteral}
+	DoubleLiteral = Token{ID: token.DoubleLiteral}
 
-	BoolLiteral = Token{token.BoolLiteral}
+	BoolLiteral = Token{ID: token.BoolLiteral}
 
-	Constant = Either{"constant", []BNF{
-		Sequence{"", []BNF{
-			Optional{"", Sign},
-			Either{"", []BNF{
-				Either{"", []BNF{
+	Constant = Either{Name: "constant", BNFs: []BNF{
+		Sequence{BNFs: []BNF{
+			Optional{BNF: Sign},
+			Either{BNFs: []BNF{
+				Either{BNFs: []BNF{
 					&IntLiteral,
 					&DoubleLiteral,
 				}},
-				Token{token.UserDefined},
+				Token{ID: token.UserDefined},
 			}},
 		}},
 		&BoolLiteral,
 	}}
 
-	ConstantDefinition = Sequence{"constant-definition", []BNF{
-		Token{token.UserDefined},
-		Token{token.Eq},
+	ConstantDefinition = Sequence{Name: "constant-definition", BNFs: []BNF{
+		Token{ID: token.UserDefined},
+		Token{ID: token.Eq},
 		&Constant,
 	}}
 
-	Constants = Optional{"constants", Sequence{"", []BNF{
-		Token{token.Const},
+	Constants = Optional{Name: "constants", BNF: Sequence{BNFs: []BNF{
+		Token{ID: token.Const},
 		&ConstantDefinition,
-		Token{token.Semicolon},
-		Several{"", Sequence{"", []BNF{
+		Token{ID: token.Semicolon},
+		Several{BNF: Sequence{BNFs: []BNF{
 			&ConstantDefinition,
-			Token{token.Semicolon},
+			Token{ID: token.Semicolon},
 		}}},
 	}}}
 }
@@ -92,66 +92,66 @@ var (
 )
 
 func init() {
-	Expression = Sequence{"expression", []BNF{
+	Expression = Sequence{Name: "expression", BNFs: []BNF{
 		&SimpleExpression,
-		Optional{"", Sequence{"", []BNF{
+		Optional{BNF: Sequence{BNFs: []BNF{
 			&RelationOperation,
 			&SimpleExpression,
 		}}},
 	}}
 
-	SimpleExpression = Sequence{"simple-expression", []BNF{
+	SimpleExpression = Sequence{Name: "simple-expression", BNFs: []BNF{
 		&Sign,
 		&AdditiveOperand,
-		Several{"", Sequence{"", []BNF{
+		Several{BNF: Sequence{BNFs: []BNF{
 			&AdditiveOperation,
 			&AdditiveOperand,
 		}}},
 	}}
 
-	RelationOperation = Either{"relation-operation", []BNF{
-		Token{token.Eq},
-		Token{token.Ne},
-		Token{token.Lt},
-		Token{token.Lte},
-		Token{token.Gt},
-		Token{token.Gte},
-		Token{token.In},
+	RelationOperation = Either{Name: "relation-operation", BNFs: []BNF{
+		Token{ID: token.Eq},
+		Token{ID: token.Ne},
+		Token{ID: token.Lt},
+		Token{ID: token.Lte},
+		Token{ID: token.Gt},
+		Token{ID: token.Gte},
+		Token{ID: token.In},
 	}}
 
-	AdditiveOperation = Either{"additive-operation", []BNF{
-		Token{token.Plus},
-		Token{token.Minus},
-		Token{token.Or},
+	AdditiveOperation = Either{Name: "additive-operation", BNFs: []BNF{
+		Token{ID: token.Plus},
+		Token{ID: token.Minus},
+		Token{ID: token.Or},
 	}}
 
-	AdditiveOperand = Sequence{"additive-operand", []BNF{
+	AdditiveOperand = Sequence{Name: "additive-operand", BNFs: []BNF{
 		&MultiplicativeOperand,
-		Several{"", Sequence{"", []BNF{
+		Several{BNF: Sequence{"", []BNF{
 			&MultiplicativeOperation,
 			&MultiplicativeOperand,
 		}}},
 	}}
 
-	MultiplicativeOperation = Either{"multiplicative-operation", []BNF{
-		Token{token.Multiply},
-		Token{token.Divide},
-		Token{token.Div},
-		Token{token.Mod},
-		Token{token.And},
+	MultiplicativeOperation = Either{Name: "multiplicative-operation", BNFs: []BNF{
+		Token{ID: token.Multiply},
+		Token{ID: token.Divide},
+		Token{ID: token.Div},
+		Token{ID: token.Mod},
+		Token{ID: token.And},
 	}}
 
-	MultiplicativeOperand = Either{"multiplicative-operand", []BNF{
+	MultiplicativeOperand = Either{Name: "multiplicative-operand", BNFs: []BNF{
 		&FunctionUsage,
 		&Variable,
 		&Constant,
-		Sequence{"", []BNF{
-			Token{token.OpeningParenthesis},
+		Sequence{BNFs: []BNF{
+			Token{ID: token.OpeningParenthesis},
 			&Expression,
-			Token{token.ClosingParenthesis},
+			Token{ID: token.ClosingParenthesis},
 		}},
-		Sequence{"", []BNF{
-			Token{token.Not},
+		Sequence{BNFs: []BNF{
+			Token{ID: token.Not},
 			&MultiplicativeOperand,
 		}},
 	}}
@@ -171,74 +171,74 @@ var (
 )
 
 func init() {
-	FunctionName = Token{token.UserDefined}
+	FunctionName = Token{ID: token.UserDefined}
 
-	ParameterGroup = Sequence{"parameter-group", []BNF{
-		Token{token.UserDefined},
-		Several{"", Sequence{"", []BNF{
-			Token{token.Comma},
-			Token{token.UserDefined},
+	ParameterGroup = Sequence{Name: "parameter-group", BNFs: []BNF{
+		Token{ID: token.UserDefined},
+		Several{BNF: Sequence{BNFs: []BNF{
+			Token{ID: token.Comma},
+			Token{ID: token.UserDefined},
 		}}},
-		Token{token.Colon},
+		Token{ID: token.Colon},
 		&Type,
 	}}
 
-	FormalParameters = Either{"formal-parameters", []BNF{
+	FormalParameters = Either{Name: "formal-parameters", BNFs: []BNF{
 		&ParameterGroup,
-		Sequence{"", []BNF{
-			Token{token.Var},
+		Sequence{BNFs: []BNF{
+			Token{ID: token.Var},
 			&ParameterGroup,
 		}},
-		Sequence{"", []BNF{
-			Token{token.Function},
+		Sequence{BNFs: []BNF{
+			Token{ID: token.Function},
 			&ParameterGroup,
 		}},
 	}}
 
-	FactualParameter = Either{"factual-parameter", []BNF{
+	FactualParameter = Either{Name: "factual-parameter", BNFs: []BNF{
 		&Expression,
 		&Variable,
 		&FunctionName,
 	}}
 
-	FunctionHeader = Sequence{"function-header", []BNF{
-		Token{token.Function},
+	FunctionHeader = Sequence{Name: "function-header", BNFs: []BNF{
+		Token{ID: token.Function},
 		&FunctionName,
-		Optional{"", Sequence{"", []BNF{
-			Token{token.OpeningParenthesis},
-			Optional{"", Sequence{"", []BNF{
+		Optional{BNF: Sequence{BNFs: []BNF{
+			Token{ID: token.OpeningParenthesis},
+			Optional{BNF: Sequence{BNFs: []BNF{
 				&FormalParameters,
-				Several{"", Sequence{"", []BNF{
-					Token{token.Semicolon},
+				Several{BNF: Sequence{BNFs: []BNF{
+					Token{ID: token.Semicolon},
 					&FormalParameters,
 				}}},
 			}}},
-			Token{token.ClosingParenthesis},
+			Token{ID: token.ClosingParenthesis},
 		}}},
-		Token{token.Colon},
+		Token{ID: token.Colon},
 		&Type,
-		Token{token.Semicolon},
+		Token{ID: token.Semicolon},
 	}}
 
-	FunctionDefinition = Sequence{"function-definition", []BNF{
+	FunctionDefinition = Sequence{Name: "function-definition", BNFs: []BNF{
 		&FunctionHeader,
 		&Block,
 	}}
 
-	Functions = Several{"functions", &FunctionDefinition}
+	Functions = Several{Name: "functions", BNF: &FunctionDefinition}
 
-	FunctionUsage = Sequence{"function-usage", []BNF{
+	FunctionUsage = Sequence{Name: "function-usage", BNFs: []BNF{
 		&FunctionName,
-		Optional{"", Sequence{"", []BNF{
-			Token{token.OpeningParenthesis},
-			Optional{"", Sequence{"", []BNF{
+		Optional{BNF: Sequence{BNFs: []BNF{
+			Token{ID: token.OpeningParenthesis},
+			Optional{BNF: Sequence{BNFs: []BNF{
 				&FactualParameter,
-				Several{"", Sequence{"", []BNF{
-					Token{token.Comma},
+				Several{BNF: Sequence{BNFs: []BNF{
+					Token{ID: token.Comma},
 					&FactualParameter,
 				}}},
 			}}},
-			Token{token.ClosingParenthesis},
+			Token{ID: token.ClosingParenthesis},
 		}}},
 	}}
 }
@@ -253,37 +253,37 @@ var (
 )
 
 func init() {
-	While = Sequence{"while", []BNF{
-		Token{token.While},
+	While = Sequence{Name: "while", BNFs: []BNF{
+		Token{ID: token.While},
 		&Expression,
-		Token{token.Do},
+		Token{ID: token.Do},
 		&Operator,
 	}}
 
-	Repeat = Sequence{"repeat", []BNF{
-		Token{token.Repeat},
+	Repeat = Sequence{Name: "repeat", BNFs: []BNF{
+		Token{ID: token.Repeat},
 		&Operator,
-		Several{"", Sequence{"", []BNF{
-			Token{token.Semicolon},
+		Several{BNF: Sequence{BNFs: []BNF{
+			Token{ID: token.Semicolon},
 			&Operator,
 		}}},
-		Token{token.Until},
+		Token{ID: token.Until},
 		&Expression,
 	}}
 
-	Direction = Either{"direction", []BNF{
-		Token{token.To},
-		Token{token.Downto},
+	Direction = Either{Name: "direction", BNFs: []BNF{
+		Token{ID: token.To},
+		Token{ID: token.Downto},
 	}}
 
-	For = Sequence{"for", []BNF{
-		Token{token.For},
-		Token{token.UserDefined},
-		Token{token.Assign},
+	For = Sequence{Name: "for", BNFs: []BNF{
+		Token{ID: token.For},
+		Token{ID: token.UserDefined},
+		Token{ID: token.Assign},
 		&Expression,
 		&Direction,
 		&Expression,
-		Token{token.Do},
+		Token{ID: token.Do},
 		&Operator,
 	}}
 }
@@ -303,53 +303,53 @@ var (
 
 func init() {
 	// TODO: Syntax analyzer is very sensitive to extra semicolons.
-	Operator = Either{"operator", []BNF{
+	Operator = Either{Name: "operator", BNFs: []BNF{
 		&SimpleOperator,
 		&ComplexOperator,
 		&Empty,
 	}}
 
-	SimpleOperator = Either{"simple-operator", []BNF{
+	SimpleOperator = Either{Name: "simple-operator", BNFs: []BNF{
 		&AssignmentOperator,
 	}}
 
-	CompositeOperator = Sequence{"composite-operator", []BNF{
-		Token{token.Begin},
+	CompositeOperator = Sequence{Name: "composite-operator", BNFs: []BNF{
+		Token{ID: token.Begin},
 		&Operator,
-		Several{"", Sequence{"", []BNF{
-			Token{token.Semicolon},
+		Several{BNF: Sequence{BNFs: []BNF{
+			Token{ID: token.Semicolon},
 			&Operator,
 		}}},
-		Token{token.End},
+		Token{ID: token.End},
 	}}
 
-	ComplexOperator = Either{"complex-operator", []BNF{
+	ComplexOperator = Either{Name: "complex-operator", BNFs: []BNF{
 		&CompositeOperator,
 		&AssignmentOperator,
 		&ConditionOperator,
 		&LoopOperator,
 	}}
 
-	ConditionOperator = Either{"condition-operator", []BNF{
+	ConditionOperator = Either{Name: "condition-operator", BNFs: []BNF{
 		&If,
 	}}
 
-	LoopOperator = Either{"loop-operator", []BNF{
+	LoopOperator = Either{Name: "loop-operator", BNFs: []BNF{
 		&For,
 		&While,
 		&Repeat,
 	}}
 
-	Operators = Sequence{"operators", []BNF{
+	Operators = Sequence{Name: "operators", BNFs: []BNF{
 		&CompositeOperator,
 	}}
 
-	AssignmentOperator = Sequence{"assignment-operator", []BNF{
-		Either{"", []BNF{
+	AssignmentOperator = Sequence{Name: "assignment-operator", BNFs: []BNF{
+		Either{BNFs: []BNF{
 			&Variable,
 			&FunctionName,
 		}},
-		Token{token.Assign},
+		Token{ID: token.Assign},
 		&Expression,
 	}}
 }
@@ -363,21 +363,21 @@ var (
 )
 
 func init() {
-	Type = Token{token.UserDefined}
+	Type = Token{ID: token.UserDefined}
 
-	TypeDefinition = Sequence{"type-definition", []BNF{
-		Token{token.UserDefined},
-		Token{token.Eq},
+	TypeDefinition = Sequence{Name: "type-definition", BNFs: []BNF{
+		Token{ID: token.UserDefined},
+		Token{ID: token.Eq},
 		&Type,
 	}}
 
-	Types = Optional{"types", Sequence{"", []BNF{
-		Token{token.Type},
+	Types = Optional{Name: "types", BNF: Sequence{BNFs: []BNF{
+		Token{ID: token.Type},
 		&TypeDefinition,
-		Token{token.Semicolon},
-		Several{"", Sequence{"", []BNF{
+		Token{ID: token.Semicolon},
+		Several{BNF: Sequence{BNFs: []BNF{
 			&TypeDefinition,
-			Token{token.Semicolon},
+			Token{ID: token.Semicolon},
 		}}},
 	}}}
 }
@@ -393,35 +393,35 @@ var (
 )
 
 func init() {
-	VariableName = Sequence{"variable-name", []BNF{
-		Token{token.UserDefined},
+	VariableName = Sequence{Name: "variable-name", BNFs: []BNF{
+		Token{ID: token.UserDefined},
 	}}
 
-	FullVariable = Sequence{"full variable", []BNF{
+	FullVariable = Sequence{Name: "full variable", BNFs: []BNF{
 		&VariableName,
 	}}
 
-	Variable = Either{"variable", []BNF{
+	Variable = Either{Name: "variable", BNFs: []BNF{
 		&FullVariable,
 	}}
 
-	SameTypeVariables = Sequence{"same-type-variables", []BNF{
-		Token{token.UserDefined},
-		Several{"", Sequence{"", []BNF{
-			Token{token.Comma},
-			Token{token.UserDefined},
+	SameTypeVariables = Sequence{Name: "same-type-variables", BNFs: []BNF{
+		Token{ID: token.UserDefined},
+		Several{BNF: Sequence{BNFs: []BNF{
+			Token{ID: token.Comma},
+			Token{ID: token.UserDefined},
 		}}},
-		Token{token.Colon},
+		Token{ID: token.Colon},
 		&Type,
 	}}
 
-	Variables = Optional{"variables", Sequence{"", []BNF{
-		Token{token.Var},
+	Variables = Optional{Name: "variables", BNF: Sequence{BNFs: []BNF{
+		Token{ID: token.Var},
 		&SameTypeVariables,
-		Token{token.Semicolon},
-		Several{"", Sequence{"", []BNF{
+		Token{ID: token.Semicolon},
+		Several{BNF: Sequence{BNFs: []BNF{
 			&SameTypeVariables,
-			Token{token.Semicolon},
+			Token{ID: token.Semicolon},
 		}}},
 	}}}
 }
@@ -445,12 +445,12 @@ func init() {
 		&Operators,
 	}}
 
-	Program = Sequence{"program", []BNF{
-		Token{token.Program},
-		Token{token.UserDefined},
-		Token{token.Semicolon},
+	Program = Sequence{Name: "program", BNFs: []BNF{
+		Token{ID: token.Program},
+		Token{ID: token.UserDefined},
+		Token{ID: token.Semicolon},
 		&Block,
-		Token{token.Period},
-		Token{token.EOF},
+		Token{ID: token.Period},
+		Token{ID: token.EOF},
 	}}
 }
