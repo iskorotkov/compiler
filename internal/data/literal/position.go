@@ -19,3 +19,11 @@ func (p Position) String() string {
 
 	return fmt.Sprintf("%d:%d-%d", p.Line, p.StartCol, p.EndCol)
 }
+
+func (p Position) Before(other Position) bool {
+	return p.Line < other.Line || (p.Line == other.Line && p.StartCol < other.StartCol)
+}
+
+func (p Position) After(other Position) bool {
+	return p.Line > other.Line || (p.Line == other.Line && p.StartCol > other.StartCol)
+}
