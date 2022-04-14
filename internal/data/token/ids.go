@@ -279,17 +279,17 @@ func init() {
 func (i ID) String() string {
 	switch i {
 	case Unknown:
-		return "<unknown>"
+		return "unknown"
 	case UserDefined:
-		return "<user defined>"
+		return "user defined"
 	case EOF:
-		return "<EOF>"
+		return "EOF"
 	case IntLiteral:
-		return "<int literal>"
+		return "int literal"
 	case DoubleLiteral:
-		return "<double literal>"
+		return "double literal"
 	case BoolLiteral:
-		return "<bool literal>"
+		return "bool literal"
 	default:
 		return tokens[i]
 	}

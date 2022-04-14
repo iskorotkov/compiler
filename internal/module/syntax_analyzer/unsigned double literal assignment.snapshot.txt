@@ -1,1 +1,1 @@
-ok: program
+ok: list of 6 items
