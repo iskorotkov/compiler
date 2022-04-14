@@ -1,7 +1,7 @@
 program p;
-function power(a: integer; b: integer): double;
+function power(a: integer; b: integer): real;
 var i: integer;
-    result: double;
+    result: real;
 begin
   result := 1;
   for i := 1 to b do

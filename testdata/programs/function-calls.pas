@@ -1,11 +1,11 @@
 program p;
 var i: integer;
-    s: double;
+    s: real;
 function foo(a: integer): integer;
 begin
   foo := a;
 end
-function square(x: double): double;
+function square(x: real): real;
 begin
   square := x * x;
 end

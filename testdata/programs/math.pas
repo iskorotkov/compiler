@@ -2,7 +2,7 @@ program p;
 const PI = 3.14;
       E = 2.71;
       R = 16;
-var p, square, res: double;
+var p, square, res: real;
 begin
   p := 2 * PI * R;
   square := PI * R * R;

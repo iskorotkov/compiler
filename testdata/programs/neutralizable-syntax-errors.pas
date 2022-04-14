@@ -3,7 +3,7 @@ function foo(a: integer): intger;
 begn
   foo := a;
 end
-functiox square(x: doubvle): double2;
+functiox square(x: reval): real2;
 begin
   square := x * x;
 end
