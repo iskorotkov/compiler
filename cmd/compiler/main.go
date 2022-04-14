@@ -10,7 +10,7 @@ import (
 	"github.com/iskorotkov/compiler/internal/module/reader"
 	"github.com/iskorotkov/compiler/internal/module/scanner"
 	"github.com/iskorotkov/compiler/internal/module/syntax_analyzer"
-	"github.com/iskorotkov/compiler/internal/module/syntax_neutralizer"
+	"github.com/iskorotkov/compiler/internal/module/typechecker"
 )
 
 func main() {
@@ -40,19 +40,21 @@ func compile(ctx context.FullContext, r io.Reader) {
 	sc := scanner.New(buffer)
 	tokens := sc.Scan(ctx, literals)
 
-	neutralizer := syntax_neutralizer.New(1)
+	syn := syntax_analyzer.New(buffer)
+	programs := syn.Analyze(ctx, tokens)
 
-	sa := syntax_analyzer.New(buffer)
-	syntaxConstructions := sa.Analyze(struct {
-		context.LoggerContext
-		context.NeutralizerContext
-	}{ctx, context.NewNeutralizerContext(neutralizer)}, tokens)
+	checker := typechecker.NewTypeChecker(buffer)
+	results := checker.Check(ctx, programs)
 
-	_, err := (<-syntaxConstructions).Unwrap()
-	if err != nil {
-		fmt.Println(err)
+	<-results
+
+	if len(ctx.Errors()) == 0 {
+		fmt.Println("compiled successfully")
 		return
 	}
 
-	fmt.Println("compiled successfully")
+	fmt.Printf("type checking finished with %d errors\n", len(ctx.Errors()))
+	for _, err := range ctx.Errors() {
+		fmt.Println(err)
+	}
 }
