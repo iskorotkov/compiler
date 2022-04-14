@@ -5,30 +5,27 @@ import (
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/iskorotkov/compiler/internal/data/symbol"
+	"github.com/iskorotkov/compiler/internal/module/syntax_neutralizer"
 )
 
 var _ FullContext = (*devContext)(nil)
 
 type devContext struct {
 	context.Context
+	errorsContext
+	neutralizerContext
+	symbolScopeContext
 	logger *zap.SugaredLogger
-	errors []error
 }
 
-func (d *devContext) setLogger(logger *zap.SugaredLogger) {
-	d.logger = logger
+func (c *devContext) setLogger(logger *zap.SugaredLogger) {
+	c.logger = logger
 }
 
-func (d *devContext) Logger() *zap.SugaredLogger {
-	return d.logger
-}
-
-func (d *devContext) AddError(err error) {
-	d.errors = append(d.errors, err)
-}
-
-func (d *devContext) Errors() []error {
-	return d.errors
+func (c *devContext) Logger() *zap.SugaredLogger {
+	return c.logger
 }
 
 func NewDevContext(ctx context.Context) FullContext {
@@ -66,6 +63,8 @@ func NewDevContext(ctx context.Context) FullContext {
 
 			return logger.Sugar()
 		}(),
-		errors: nil,
+		errorsContext:      errorsContext{},
+		neutralizerContext: neutralizerContext{neutralizer: syntax_neutralizer.New(1)},
+		symbolScopeContext: symbolScopeContext{scope: symbol.NewScope()},
 	}
 }

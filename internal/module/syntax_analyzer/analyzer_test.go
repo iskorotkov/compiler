@@ -12,7 +12,6 @@ import (
 	"github.com/iskorotkov/compiler/internal/fn/option"
 	"github.com/iskorotkov/compiler/internal/fn/slice"
 	"github.com/iskorotkov/compiler/internal/module/syntax_analyzer"
-	"github.com/iskorotkov/compiler/internal/module/syntax_neutralizer"
 	"github.com/iskorotkov/compiler/internal/snapshot"
 )
 
@@ -123,13 +122,7 @@ func TestAnalyzer(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			resCh := analyzer.Analyze(struct {
-				context.LoggerContext
-				context.NeutralizerContext
-			}{
-				LoggerContext:      context.NewEnvContext(stdcontext.Background()),
-				NeutralizerContext: context.NewNeutralizerContext(syntax_neutralizer.New(0)),
-			}, channel.FromSlice(test.tokens))
+			resCh := analyzer.Analyze(context.NewEnvContext(stdcontext.Background()), channel.FromSlice(test.tokens))
 
 			res := channel.ToSlice(resCh)
 

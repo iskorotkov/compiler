@@ -5,6 +5,8 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/iskorotkov/compiler/internal/data/literal"
+	"github.com/iskorotkov/compiler/internal/data/symbol"
 	"github.com/iskorotkov/compiler/internal/data/token"
 	"github.com/iskorotkov/compiler/internal/fn/channel"
 	"github.com/iskorotkov/compiler/internal/fn/option"
@@ -15,6 +17,8 @@ type FullContext interface {
 	context.Context
 	LoggerContext
 	ErrorsContext
+	NeutralizerContext
+	SymbolScopeContext
 }
 
 type LoggerContext interface {
@@ -23,8 +27,8 @@ type LoggerContext interface {
 }
 
 type ErrorsContext interface {
-	AddError(err error)
-	Errors() []error
+	AddError(position literal.Position, err error)
+	Errors() []Error
 }
 
 type TxChannelContext interface {
@@ -33,4 +37,8 @@ type TxChannelContext interface {
 
 type NeutralizerContext interface {
 	Neutralizer() syntax_neutralizer.Neutralizer
+}
+
+type SymbolScopeContext interface {
+	SymbolScope() symbol.Scope
 }

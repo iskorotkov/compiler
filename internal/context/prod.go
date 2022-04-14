@@ -4,36 +4,35 @@ import (
 	"context"
 
 	"go.uber.org/zap"
+
+	"github.com/iskorotkov/compiler/internal/data/symbol"
+	"github.com/iskorotkov/compiler/internal/module/syntax_neutralizer"
 )
 
 var _ FullContext = (*prodContext)(nil)
 
 type prodContext struct {
 	context.Context
+	errorsContext
+	neutralizerContext
+	symbolScopeContext
 	logger *zap.SugaredLogger
-	errors []error
 }
 
-func (p *prodContext) setLogger(logger *zap.SugaredLogger) {
-	p.logger = logger
+func (c *prodContext) setLogger(logger *zap.SugaredLogger) {
+	c.logger = logger
 }
 
-func (p *prodContext) Logger() *zap.SugaredLogger {
-	return p.logger
-}
-
-func (p *prodContext) AddError(err error) {
-	p.errors = append(p.errors, err)
-}
-
-func (p *prodContext) Errors() []error {
-	return p.errors
+func (c *prodContext) Logger() *zap.SugaredLogger {
+	return c.logger
 }
 
 func NewProdContext(ctx context.Context) FullContext {
 	return &prodContext{
-		Context: ctx,
-		logger:  zap.NewNop().Sugar(),
-		errors:  nil,
+		Context:            ctx,
+		logger:             zap.NewNop().Sugar(),
+		errorsContext:      errorsContext{},
+		neutralizerContext: neutralizerContext{neutralizer: syntax_neutralizer.New(1)},
+		symbolScopeContext: symbolScopeContext{scope: symbol.NewScope()},
 	}
 }
