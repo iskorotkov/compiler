@@ -5,21 +5,23 @@ import (
 	"fmt"
 
 	"github.com/iskorotkov/compiler/internal/context"
+	"github.com/iskorotkov/compiler/internal/data/ast"
 	"github.com/iskorotkov/compiler/internal/data/token"
 	"github.com/iskorotkov/compiler/internal/module/syntax_neutralizer"
 )
 
-var _ BNF = &Token{}
+var _ BNF = Token{}
 
 type Token struct {
-	token.ID
+	ID token.ID
+	ast.Markers
 }
 
-func (tk Token) Accept(ctx interface {
+func (tk Token) Build(ctx interface {
 	context.LoggerContext
 	context.TxChannelContext
 	context.NeutralizerContext
-}) error {
+}) (ast.Node, error) {
 	defer ctx.TxChannel().Rollback()
 
 	ctx, cancel := context.Scoped(ctx, tk.String())
@@ -28,14 +30,14 @@ func (tk Token) Accept(ctx interface {
 	t, err := ctx.TxChannel().Read().Unwrap()
 	if err != nil {
 		ctx.Logger().Warnf("error %v, returning", err)
-		return fmt.Errorf("token error: %v", err)
+		return nil, fmt.Errorf("token error: %v", err)
 	}
 
 	_, err = ctx.Neutralizer().Neutralize(tk.ID, t)
 	if err != nil {
 		if errors.Is(err, syntax_neutralizer.UnfixableError) {
 			ctx.Logger().Warnf("unfixable syntax error: %v", err)
-			return fmt.Errorf("%v: expected %q, got %q: %w", t.Literal, tk, t.ID, ErrUnexpectedToken)
+			return nil, fmt.Errorf("%v: expected %q, got %q: %w", t.Literal, tk, t.ID, ErrUnexpectedToken)
 		}
 
 		ctx.Logger().Infof("fixed syntax error: %v", err)
@@ -44,7 +46,7 @@ func (tk Token) Accept(ctx interface {
 	ctx.Logger().Infof("commit")
 	ctx.TxChannel().Commit()
 
-	return nil
+	return ast.Token(t, tk.Markers), nil
 }
 
 func (tk Token) String() string {

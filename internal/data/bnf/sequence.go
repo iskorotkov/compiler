@@ -4,36 +4,44 @@ import (
 	"fmt"
 
 	"github.com/iskorotkov/compiler/internal/context"
+	"github.com/iskorotkov/compiler/internal/data/ast"
 )
 
-var _ BNF = &Sequence{}
+var _ BNF = Sequence{}
 
 type Sequence struct {
 	Name string
 	BNFs []BNF
+	ast.Markers
 }
 
-func (s Sequence) Accept(ctx interface {
+func (s Sequence) Build(ctx interface {
 	context.LoggerContext
 	context.TxChannelContext
 	context.NeutralizerContext
-}) error {
+}) (ast.Node, error) {
 	defer ctx.TxChannel().Rollback()
 
 	ctx, cancel := context.Scoped(ctx, s.Name)
 	defer cancel()
 
+	var items []ast.Node
 	for _, item := range s.BNFs {
-		if err := item.Accept(ctx); err != nil {
+		res, err := item.Build(ctx)
+		if err != nil {
 			ctx.Logger().Warnf("%v in %v, returning", err, s)
-			return err
+			return nil, err
+		}
+
+		if res != nil {
+			items = append(items, res)
 		}
 	}
 
 	ctx.Logger().Infof("commit")
 	ctx.TxChannel().Commit()
 
-	return nil
+	return ast.WrapSlice(items, s.Markers), nil
 }
 
 func (s Sequence) String() string {

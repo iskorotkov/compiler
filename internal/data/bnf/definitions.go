@@ -1,6 +1,7 @@
 package bnf
 
 import (
+	"github.com/iskorotkov/compiler/internal/data/ast"
 	"github.com/iskorotkov/compiler/internal/data/token"
 )
 
@@ -32,25 +33,22 @@ var (
 	Constant           Either
 	ConstantDefinition Sequence
 	Constants          Optional
-	Sign               Either
+	Sign               Optional
 )
 
 func init() {
-	Sign = Either{Name: "sign", BNFs: []BNF{
+	IntLiteral = Token{ID: token.IntLiteral}
+	DoubleLiteral = Token{ID: token.DoubleLiteral}
+	BoolLiteral = Token{ID: token.BoolLiteral}
+
+	Sign = Optional{Name: "sign", BNF: Either{BNFs: []BNF{
 		Token{ID: token.Plus},
 		Token{ID: token.Minus},
-		&Empty,
-	}}
-
-	IntLiteral = Token{ID: token.IntLiteral}
-
-	DoubleLiteral = Token{ID: token.DoubleLiteral}
-
-	BoolLiteral = Token{ID: token.BoolLiteral}
+	}}}
 
 	Constant = Either{Name: "constant", BNFs: []BNF{
 		Sequence{BNFs: []BNF{
-			Optional{BNF: Sign},
+			&Sign,
 			Either{BNFs: []BNF{
 				Either{BNFs: []BNF{
 					&IntLiteral,
@@ -60,13 +58,13 @@ func init() {
 			}},
 		}},
 		&BoolLiteral,
-	}}
+	}, Markers: ast.Markers{ast.MarkerValue: true}}
 
 	ConstantDefinition = Sequence{Name: "constant-definition", BNFs: []BNF{
-		Token{ID: token.UserDefined},
+		Token{ID: token.UserDefined, Markers: ast.Markers{ast.MarkerName: true}},
 		Token{ID: token.Eq},
 		&Constant,
-	}}
+	}, Markers: ast.Markers{ast.MarkerConstDecl: true}}
 
 	Constants = Optional{Name: "constants", BNF: Sequence{BNFs: []BNF{
 		Token{ID: token.Const},
@@ -98,7 +96,7 @@ func init() {
 			&RelationOperation,
 			&SimpleExpression,
 		}}},
-	}}
+	}, Markers: ast.Markers{ast.MarkerExpr: true}}
 
 	SimpleExpression = Sequence{Name: "simple-expression", BNFs: []BNF{
 		&Sign,
@@ -117,28 +115,28 @@ func init() {
 		Token{ID: token.Gt},
 		Token{ID: token.Gte},
 		Token{ID: token.In},
-	}}
+	}, Markers: ast.Markers{ast.MarkerCompareOp: true}}
 
 	AdditiveOperation = Either{Name: "additive-operation", BNFs: []BNF{
-		Token{ID: token.Plus},
-		Token{ID: token.Minus},
-		Token{ID: token.Or},
+		Token{ID: token.Plus, Markers: ast.Markers{ast.MarkerAdditiveOp: true}},
+		Token{ID: token.Minus, Markers: ast.Markers{ast.MarkerAdditiveOp: true}},
+		Token{ID: token.Or, Markers: ast.Markers{ast.MarkerLogicOp: true}},
 	}}
 
 	AdditiveOperand = Sequence{Name: "additive-operand", BNFs: []BNF{
 		&MultiplicativeOperand,
-		Several{BNF: Sequence{"", []BNF{
+		Several{BNF: Sequence{BNFs: []BNF{
 			&MultiplicativeOperation,
 			&MultiplicativeOperand,
 		}}},
 	}}
 
 	MultiplicativeOperation = Either{Name: "multiplicative-operation", BNFs: []BNF{
-		Token{ID: token.Multiply},
-		Token{ID: token.Divide},
-		Token{ID: token.Div},
-		Token{ID: token.Mod},
-		Token{ID: token.And},
+		Token{ID: token.Multiply, Markers: ast.Markers{ast.MarkerMultiplicativeOp: true}},
+		Token{ID: token.Divide, Markers: ast.Markers{ast.MarkerMultiplicativeOp: true}},
+		Token{ID: token.Div, Markers: ast.Markers{ast.MarkerMultiplicativeOp: true}},
+		Token{ID: token.Mod, Markers: ast.Markers{ast.MarkerMultiplicativeOp: true}},
+		Token{ID: token.And, Markers: ast.Markers{ast.MarkerLogicOp: true}},
 	}}
 
 	MultiplicativeOperand = Either{Name: "multiplicative-operand", BNFs: []BNF{
@@ -168,20 +166,27 @@ var (
 	FunctionDefinition Sequence
 	Functions          Several
 	FunctionUsage      Sequence
+	FunctionReturnType Sequence
 )
 
 func init() {
-	FunctionName = Token{ID: token.UserDefined}
+	Functions = Several{Name: "functions", BNF: &FunctionDefinition}
+	FunctionReturnType = Sequence{Name: "function-return-type", BNFs: []BNF{&Type}, Markers: ast.Markers{ast.MarkerReturnType: true}}
+
+	FunctionName = Token{ID: token.UserDefined, Markers: ast.Markers{
+		ast.MarkerName:     true,
+		ast.MarkerFuncName: true,
+	}}
 
 	ParameterGroup = Sequence{Name: "parameter-group", BNFs: []BNF{
-		Token{ID: token.UserDefined},
+		Token{ID: token.UserDefined, Markers: ast.Markers{ast.MarkerName: true}},
 		Several{BNF: Sequence{BNFs: []BNF{
 			Token{ID: token.Comma},
-			Token{ID: token.UserDefined},
+			Token{ID: token.UserDefined, Markers: ast.Markers{ast.MarkerName: true}},
 		}}},
 		Token{ID: token.Colon},
 		&Type,
-	}}
+	}, Markers: ast.Markers{ast.MarkerParamGroupDecl: true}}
 
 	FormalParameters = Either{Name: "formal-parameters", BNFs: []BNF{
 		&ParameterGroup,
@@ -216,16 +221,14 @@ func init() {
 			Token{ID: token.ClosingParenthesis},
 		}}},
 		Token{ID: token.Colon},
-		&Type,
+		&FunctionReturnType,
 		Token{ID: token.Semicolon},
-	}}
+	}, Markers: ast.Markers{ast.MarkerFuncDecl: true}}
 
 	FunctionDefinition = Sequence{Name: "function-definition", BNFs: []BNF{
 		&FunctionHeader,
 		&Block,
 	}}
-
-	Functions = Several{Name: "functions", BNF: &FunctionDefinition}
 
 	FunctionUsage = Sequence{Name: "function-usage", BNFs: []BNF{
 		&FunctionName,
@@ -291,7 +294,7 @@ func init() {
 // Operators.
 
 var (
-	Operator           Either
+	Operator           Optional
 	SimpleOperator     Either
 	CompositeOperator  Sequence
 	ComplexOperator    Either
@@ -302,16 +305,15 @@ var (
 )
 
 func init() {
+	SimpleOperator = Either{Name: "simple-operator", BNFs: []BNF{&AssignmentOperator}}
+	ConditionOperator = Either{Name: "condition-operator", BNFs: []BNF{&If}}
+	Operators = Sequence{Name: "operators", BNFs: []BNF{&CompositeOperator}}
+
 	// TODO: Syntax analyzer is very sensitive to extra semicolons.
-	Operator = Either{Name: "operator", BNFs: []BNF{
+	Operator = Optional{Name: "operator", BNF: Either{BNFs: []BNF{
 		&SimpleOperator,
 		&ComplexOperator,
-		&Empty,
-	}}
-
-	SimpleOperator = Either{Name: "simple-operator", BNFs: []BNF{
-		&AssignmentOperator,
-	}}
+	}}}
 
 	CompositeOperator = Sequence{Name: "composite-operator", BNFs: []BNF{
 		Token{ID: token.Begin},
@@ -330,28 +332,20 @@ func init() {
 		&LoopOperator,
 	}}
 
-	ConditionOperator = Either{Name: "condition-operator", BNFs: []BNF{
-		&If,
-	}}
-
 	LoopOperator = Either{Name: "loop-operator", BNFs: []BNF{
 		&For,
 		&While,
 		&Repeat,
 	}}
 
-	Operators = Sequence{Name: "operators", BNFs: []BNF{
-		&CompositeOperator,
-	}}
-
 	AssignmentOperator = Sequence{Name: "assignment-operator", BNFs: []BNF{
 		Either{BNFs: []BNF{
 			&Variable,
 			&FunctionName,
-		}},
+		}, Markers: ast.Markers{ast.MarkerLeftSide: true}},
 		Token{ID: token.Assign},
-		&Expression,
-	}}
+		Sequence{BNFs: []BNF{&Expression}, Markers: ast.Markers{ast.MarkerRightSide: true}},
+	}, Markers: ast.Markers{ast.MarkerAssign: true}}
 }
 
 // Types.
@@ -363,13 +357,13 @@ var (
 )
 
 func init() {
-	Type = Token{ID: token.UserDefined}
+	Type = Token{ID: token.UserDefined, Markers: ast.Markers{ast.MarkerType: true}}
 
 	TypeDefinition = Sequence{Name: "type-definition", BNFs: []BNF{
-		Token{ID: token.UserDefined},
+		Token{ID: token.UserDefined, Markers: ast.Markers{ast.MarkerName: true}},
 		Token{ID: token.Eq},
 		&Type,
-	}}
+	}, Markers: ast.Markers{ast.MarkerTypeDecl: true}}
 
 	Types = Optional{Name: "types", BNF: Sequence{BNFs: []BNF{
 		Token{ID: token.Type},
@@ -393,27 +387,19 @@ var (
 )
 
 func init() {
-	VariableName = Sequence{Name: "variable-name", BNFs: []BNF{
-		Token{ID: token.UserDefined},
-	}}
-
-	FullVariable = Sequence{Name: "full variable", BNFs: []BNF{
-		&VariableName,
-	}}
-
-	Variable = Either{Name: "variable", BNFs: []BNF{
-		&FullVariable,
-	}}
+	VariableName = Sequence{Name: "variable-name", BNFs: []BNF{Token{ID: token.UserDefined}}}
+	FullVariable = Sequence{Name: "full variable", BNFs: []BNF{&VariableName}}
+	Variable = Either{Name: "variable", BNFs: []BNF{&FullVariable}}
 
 	SameTypeVariables = Sequence{Name: "same-type-variables", BNFs: []BNF{
-		Token{ID: token.UserDefined},
+		Token{ID: token.UserDefined, Markers: ast.Markers{ast.MarkerName: true}},
 		Several{BNF: Sequence{BNFs: []BNF{
 			Token{ID: token.Comma},
-			Token{ID: token.UserDefined},
+			Token{ID: token.UserDefined, Markers: ast.Markers{ast.MarkerName: true}},
 		}}},
 		Token{ID: token.Colon},
 		&Type,
-	}}
+	}, Markers: ast.Markers{ast.MarkerVarDecl: true}}
 
 	Variables = Optional{Name: "variables", BNF: Sequence{BNFs: []BNF{
 		Token{ID: token.Var},
@@ -431,13 +417,10 @@ func init() {
 var (
 	Block   Sequence
 	Program Sequence
-	Empty   Sequence
 )
 
 func init() {
-	Empty = Sequence{}
-
-	Block = Sequence{"block", []BNF{
+	Block = Sequence{Name: "block", BNFs: []BNF{
 		&Constants,
 		&Types,
 		&Variables,

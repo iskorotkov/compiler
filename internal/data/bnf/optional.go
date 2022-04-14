@@ -5,37 +5,40 @@ import (
 	"fmt"
 
 	"github.com/iskorotkov/compiler/internal/context"
+	"github.com/iskorotkov/compiler/internal/data/ast"
 )
 
-var _ BNF = &Optional{}
+var _ BNF = Optional{}
 
 type Optional struct {
 	Name string
-	BNF
+	BNF  BNF
+	ast.Markers
 }
 
-func (o Optional) Accept(ctx interface {
+func (o Optional) Build(ctx interface {
 	context.LoggerContext
 	context.TxChannelContext
 	context.NeutralizerContext
-}) error {
+}) (ast.Node, error) {
 	defer ctx.TxChannel().Rollback()
 
 	ctx, cancel := context.Scoped(ctx, o.Name)
 	defer cancel()
 
-	if err := o.BNF.Accept(ctx); errors.Is(err, ErrUnexpectedToken) {
+	res, err := o.BNF.Build(ctx)
+	if errors.Is(err, ErrUnexpectedToken) {
 		ctx.Logger().Infof("%v in %v, rollback tx", err, o)
-		return nil
+		return nil, nil
 	} else if err != nil {
 		ctx.Logger().Warnf("%v in %v, returning", err, o)
-		return err
+		return nil, err
 	}
 
 	ctx.Logger().Infof("commit")
 	ctx.TxChannel().Commit()
 
-	return nil
+	return ast.Wrap(res, o.Markers), nil
 }
 
 func (o Optional) String() string {

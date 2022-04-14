@@ -5,33 +5,42 @@ import (
 	"fmt"
 
 	"github.com/iskorotkov/compiler/internal/context"
+	"github.com/iskorotkov/compiler/internal/data/ast"
 )
 
-var _ BNF = &Several{}
+var _ BNF = Several{}
 
 type Several struct {
 	Name string
-	BNF
+	BNF  BNF
+	ast.Markers
 }
 
-func (s Several) Accept(ctx interface {
+func (s Several) Build(ctx interface {
 	context.LoggerContext
 	context.TxChannelContext
 	context.NeutralizerContext
-}) error {
+}) (ast.Node, error) {
 	defer ctx.TxChannel().Rollback()
 
 	ctx, cancel := context.Scoped(ctx, s.Name)
 	defer cancel()
 
+	var items []ast.Node
 	for {
-		if err := s.BNF.Accept(ctx); errors.Is(err, ErrUnexpectedToken) {
+		res, err := s.BNF.Build(ctx)
+		if errors.Is(err, ErrUnexpectedToken) {
 			ctx.TxChannel().Commit()
 			ctx.Logger().Infof("%v in %v, committing tx", err, s)
-			return nil
+
+			return ast.WrapSlice(items, s.Markers), nil
 		} else if err != nil {
 			ctx.Logger().Warnf("%v in %v, returning", err, s)
-			return err
+			return nil, err
+		}
+
+		if res != nil {
+			items = append(items, res)
 		}
 	}
 }

@@ -5,20 +5,22 @@ import (
 	"fmt"
 
 	"github.com/iskorotkov/compiler/internal/context"
+	"github.com/iskorotkov/compiler/internal/data/ast"
 )
 
-var _ BNF = &Either{}
+var _ BNF = Either{}
 
 type Either struct {
 	Name string
 	BNFs []BNF
+	ast.Markers
 }
 
-func (e Either) Accept(ctx interface {
+func (e Either) Build(ctx interface {
 	context.LoggerContext
 	context.TxChannelContext
 	context.NeutralizerContext
-}) error {
+}) (ast.Node, error) {
 	defer ctx.TxChannel().Rollback()
 
 	ctx, cancel := context.Scoped(ctx, e.Name)
@@ -26,22 +28,27 @@ func (e Either) Accept(ctx interface {
 
 	var lastError error
 	for _, item := range e.BNFs {
-		if err := item.Accept(ctx); errors.Is(err, ErrUnexpectedToken) {
+		res, err := item.Build(ctx)
+		if errors.Is(err, ErrUnexpectedToken) {
 			lastError = err
 			ctx.Logger().Infof("%v in %v, skipping", err, e)
 			continue
 		} else if err != nil {
 			ctx.Logger().Warnf("%v in %v, returning", err, e)
-			return err
+			return nil, err
 		}
 
 		ctx.Logger().Infof("commit")
 		ctx.TxChannel().Commit()
 
-		return nil
+		if res == nil {
+			return nil, nil
+		}
+
+		return ast.Wrap(res, e.Markers), nil
 	}
 
-	return fmt.Errorf("the token is not in a list of expected tokens: %w", lastError)
+	return nil, fmt.Errorf("the token is not in a list of expected tokens: %w", lastError)
 }
 
 func (e Either) String() string {
