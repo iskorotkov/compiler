@@ -27,3 +27,11 @@ func (p Position) Before(other Position) bool {
 func (p Position) After(other Position) bool {
 	return p.Line > other.Line || (p.Line == other.Line && p.StartCol > other.StartCol)
 }
+
+func (p Position) Join(other Position) Position {
+	return Position{
+		Line:     p.Line,
+		StartCol: p.StartCol,
+		EndCol:   other.EndCol,
+	}
+}
