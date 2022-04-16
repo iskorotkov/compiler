@@ -15,11 +15,11 @@ func NewScope() Scope {
 		symbols: map[int]Symbol{},
 	}
 
-	integerSymbol := Type{Token: builtinToken("integer")}
-	realSymbol := Type{Token: builtinToken("real")}
-	booleanSymbol := Type{Token: builtinToken("boolean")}
-	stringSymbol := Type{Token: builtinToken("string")}
-	voidSymbol := Type{Token: builtinToken("void")}
+	integerSymbol := Type{Token: builtinToken("integer"), BuiltinType: BuiltinTypeInt}
+	realSymbol := Type{Token: builtinToken("real"), BuiltinType: BuiltinTypeDouble}
+	booleanSymbol := Type{Token: builtinToken("boolean"), BuiltinType: BuiltinTypeBool}
+	stringSymbol := Type{Token: builtinToken("string"), BuiltinType: BuiltinTypeString}
+	voidSymbol := Type{Token: builtinToken("void"), BuiltinType: BuiltinTypeVoid}
 	writelnSymbol := Func{
 		Token: builtinToken("writeln"),
 		Params: []Var{

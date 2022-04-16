@@ -7,6 +7,15 @@ import (
 	"github.com/iskorotkov/compiler/internal/data/token"
 )
 
+const (
+	BuiltinTypeUnknown BuiltinType = iota
+	BuiltinTypeVoid
+	BuiltinTypeInt
+	BuiltinTypeDouble
+	BuiltinTypeBool
+	BuiltinTypeString
+)
+
 var (
 	_ Symbol = (*Name)(nil)
 	_ Symbol = (*Type)(nil)
@@ -14,6 +23,23 @@ var (
 	_ Symbol = (*Var)(nil)
 	_ Symbol = (*Const)(nil)
 )
+
+type BuiltinType int
+
+func (t BuiltinType) String() string {
+	switch t {
+	case BuiltinTypeUnknown:
+		return "unknown"
+	case BuiltinTypeInt:
+		return "int"
+	case BuiltinTypeDouble:
+		return "double"
+	case BuiltinTypeBool:
+		return "bool"
+	default:
+		panic(fmt.Sprintf("unknown builtin type: %d", t))
+	}
+}
 
 func builtinToken(name string) token.Token {
 	return token.Token{
@@ -47,6 +73,7 @@ type Type struct {
 	token.Token // Only for user-defined symbols.
 	hash        hasher
 	Alias       *Type // Only for user-defined types.
+	BuiltinType BuiltinType
 }
 
 func (t *Type) Hash() int {
@@ -54,7 +81,7 @@ func (t *Type) Hash() int {
 }
 
 func (t Type) String() string {
-	return fmt.Sprintf("type %v", t.Literal)
+	return fmt.Sprintf("type %v", t.Value)
 }
 
 type Var struct {
@@ -69,7 +96,7 @@ func (v *Var) Hash() int {
 }
 
 func (v Var) String() string {
-	return fmt.Sprintf("var %v", v.Literal)
+	return fmt.Sprintf("var %v", v.Value)
 }
 
 type Const struct {
@@ -84,7 +111,7 @@ func (c *Const) Hash() int {
 }
 
 func (c Const) String() string {
-	return fmt.Sprintf("const %v", c.Literal)
+	return fmt.Sprintf("const %v", c.Value)
 }
 
 type Func struct {
@@ -99,5 +126,5 @@ func (f *Func) Hash() int {
 }
 
 func (f Func) String() string {
-	return fmt.Sprintf("func %v", f.Literal)
+	return fmt.Sprintf("func %v", f.Value)
 }
