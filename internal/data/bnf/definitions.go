@@ -104,7 +104,7 @@ func init() {
 		Several{BNF: Sequence{BNFs: []BNF{
 			&AdditiveOperation,
 			&AdditiveOperand,
-		}}},
+		}}, Markers: ast.Markers{ast.MarkerAdditionalOperands: true}},
 	}}
 
 	RelationOperation = Either{Name: "relation-operation", BNFs: []BNF{
@@ -128,7 +128,7 @@ func init() {
 		Several{BNF: Sequence{BNFs: []BNF{
 			&MultiplicativeOperation,
 			&MultiplicativeOperand,
-		}}},
+		}}, Markers: ast.Markers{ast.MarkerAdditionalOperands: true}},
 	}}
 
 	MultiplicativeOperation = Either{Name: "multiplicative-operation", BNFs: []BNF{

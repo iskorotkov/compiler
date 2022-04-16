@@ -6,6 +6,9 @@ import (
 
 	"github.com/iskorotkov/compiler/internal/context"
 	"github.com/iskorotkov/compiler/internal/data/ast"
+	"github.com/iskorotkov/compiler/internal/data/token"
+	"github.com/iskorotkov/compiler/internal/fn/channel"
+	"github.com/iskorotkov/compiler/internal/fn/option"
 )
 
 var _ BNF = Either{}
@@ -18,17 +21,16 @@ type Either struct {
 
 func (e Either) Build(ctx interface {
 	context.LoggerContext
-	context.TxChannelContext
 	context.NeutralizerContext
-}) (ast.Node, error) {
-	defer ctx.TxChannel().Rollback()
+}, ch *channel.TxChannel[option.Option[token.Token]]) (ast.Node, error) {
+	defer ch.Rollback()
 
 	ctx, cancel := context.Scoped(ctx, e.Name)
 	defer cancel()
 
 	var lastError error
 	for _, item := range e.BNFs {
-		res, err := item.Build(ctx)
+		res, err := item.Build(ctx, ch)
 		if errors.Is(err, ErrUnexpectedToken) {
 			lastError = err
 			ctx.Logger().Infof("%v in %v, skipping", err, e)
@@ -39,7 +41,7 @@ func (e Either) Build(ctx interface {
 		}
 
 		ctx.Logger().Infof("commit")
-		ctx.TxChannel().Commit()
+		ch.Commit()
 
 		if res == nil {
 			return nil, nil

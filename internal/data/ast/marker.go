@@ -14,6 +14,7 @@ const (
 	// Expressions.
 
 	MarkerExpr
+	MarkerAdditionalOperands
 	MarkerMultiplicativeOp
 	MarkerAdditiveOp
 	MarkerLogicOp

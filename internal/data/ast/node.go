@@ -3,22 +3,24 @@ package ast
 import (
 	"fmt"
 
+	"github.com/iskorotkov/compiler/internal/data/literal"
 	"github.com/iskorotkov/compiler/internal/data/token"
 )
 
 var (
-	_ Node = Leaf{}
-	_ Node = Branch{}
+	_ Node = (*Leaf)(nil)
+	_ Node = (*Branch)(nil)
 )
 
 type Node interface {
 	Query(markers ...Marker) []Node
 	Has(marker Marker) bool
+	Position() literal.Position
 	fmt.Stringer
 }
 
 func Token(t token.Token, markers Markers) Node {
-	return Leaf{
+	return &Leaf{
 		Token:   t,
 		Markers: markers,
 	}
@@ -26,13 +28,13 @@ func Token(t token.Token, markers Markers) Node {
 
 func Wrap(node Node, markers Markers) Node {
 	switch node := node.(type) {
-	case Leaf:
-		return Leaf{
+	case *Leaf:
+		return &Leaf{
 			Token:   node.Token,
 			Markers: node.Markers.Merge(markers),
 		}
-	case Branch:
-		return Branch{
+	case *Branch:
+		return &Branch{
 			Items:   node.Items,
 			Markers: node.Markers.Merge(markers),
 		}
@@ -50,7 +52,7 @@ func WrapSlice(nodes []Node, markers Markers) Node {
 		return Wrap(nodes[0], markers)
 	}
 
-	return Branch{
+	return &Branch{
 		Items:   nodes,
 		Markers: markers,
 	}
@@ -61,14 +63,18 @@ type Leaf struct {
 	Markers
 }
 
-func (t Leaf) Query(markers ...Marker) []Node {
+func (l *Leaf) Query(markers ...Marker) []Node {
 	for _, marker := range markers {
-		if t.Has(marker) {
-			return []Node{t}
+		if l.Has(marker) {
+			return []Node{l}
 		}
 	}
 
 	return nil
+}
+
+func (l *Leaf) Position() literal.Position {
+	return l.Token.Position
 }
 
 type Branch struct {
@@ -76,22 +82,33 @@ type Branch struct {
 	Markers
 }
 
-func (l Branch) Query(markers ...Marker) []Node {
+func (b *Branch) Query(markers ...Marker) []Node {
 	for _, marker := range markers {
-		if l.Has(marker) {
+		if b.Has(marker) {
 			// By default, we don't want to descend into the children of a branch.
-			return []Node{l}
+			return []Node{b}
 		}
 	}
 
 	var res []Node
-	for _, item := range l.Items {
+	for _, item := range b.Items {
 		res = append(res, item.Query(markers...)...)
 	}
 
 	return res
 }
 
-func (l Branch) String() string {
-	return fmt.Sprintf("list of %d items", len(l.Items))
+func (b *Branch) Position() literal.Position {
+	switch len(b.Items) {
+	case 0:
+		return literal.Position{}
+	case 1:
+		return b.Items[0].Position()
+	default:
+		return b.Items[0].Position().Join(b.Items[len(b.Items)-1].Position())
+	}
+}
+
+func (b *Branch) String() string {
+	return fmt.Sprintf("list of %d items", len(b.Items))
 }

@@ -7,9 +7,6 @@ import (
 
 	"github.com/iskorotkov/compiler/internal/data/literal"
 	"github.com/iskorotkov/compiler/internal/data/symbol"
-	"github.com/iskorotkov/compiler/internal/data/token"
-	"github.com/iskorotkov/compiler/internal/fn/channel"
-	"github.com/iskorotkov/compiler/internal/fn/option"
 	"github.com/iskorotkov/compiler/internal/module/syntax_neutralizer"
 )
 
@@ -29,10 +26,6 @@ type LoggerContext interface {
 type ErrorsContext interface {
 	AddError(position literal.Position, err error)
 	Errors() []Error
-}
-
-type TxChannelContext interface {
-	TxChannel() *channel.TxChannel[option.Option[token.Token]]
 }
 
 type NeutralizerContext interface {

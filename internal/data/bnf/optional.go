@@ -6,6 +6,9 @@ import (
 
 	"github.com/iskorotkov/compiler/internal/context"
 	"github.com/iskorotkov/compiler/internal/data/ast"
+	"github.com/iskorotkov/compiler/internal/data/token"
+	"github.com/iskorotkov/compiler/internal/fn/channel"
+	"github.com/iskorotkov/compiler/internal/fn/option"
 )
 
 var _ BNF = Optional{}
@@ -18,15 +21,14 @@ type Optional struct {
 
 func (o Optional) Build(ctx interface {
 	context.LoggerContext
-	context.TxChannelContext
 	context.NeutralizerContext
-}) (ast.Node, error) {
-	defer ctx.TxChannel().Rollback()
+}, ch *channel.TxChannel[option.Option[token.Token]]) (ast.Node, error) {
+	defer ch.Rollback()
 
 	ctx, cancel := context.Scoped(ctx, o.Name)
 	defer cancel()
 
-	res, err := o.BNF.Build(ctx)
+	res, err := o.BNF.Build(ctx, ch)
 	if errors.Is(err, ErrUnexpectedToken) {
 		ctx.Logger().Infof("%v in %v, rollback tx", err, o)
 		return nil, nil
@@ -36,7 +38,7 @@ func (o Optional) Build(ctx interface {
 	}
 
 	ctx.Logger().Infof("commit")
-	ctx.TxChannel().Commit()
+	ch.Commit()
 
 	return ast.Wrap(res, o.Markers), nil
 }

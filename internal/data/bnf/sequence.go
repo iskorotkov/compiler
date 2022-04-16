@@ -5,6 +5,9 @@ import (
 
 	"github.com/iskorotkov/compiler/internal/context"
 	"github.com/iskorotkov/compiler/internal/data/ast"
+	"github.com/iskorotkov/compiler/internal/data/token"
+	"github.com/iskorotkov/compiler/internal/fn/channel"
+	"github.com/iskorotkov/compiler/internal/fn/option"
 )
 
 var _ BNF = Sequence{}
@@ -17,17 +20,16 @@ type Sequence struct {
 
 func (s Sequence) Build(ctx interface {
 	context.LoggerContext
-	context.TxChannelContext
 	context.NeutralizerContext
-}) (ast.Node, error) {
-	defer ctx.TxChannel().Rollback()
+}, ch *channel.TxChannel[option.Option[token.Token]]) (ast.Node, error) {
+	defer ch.Rollback()
 
 	ctx, cancel := context.Scoped(ctx, s.Name)
 	defer cancel()
 
 	var items []ast.Node
 	for _, item := range s.BNFs {
-		res, err := item.Build(ctx)
+		res, err := item.Build(ctx, ch)
 		if err != nil {
 			ctx.Logger().Warnf("%v in %v, returning", err, s)
 			return nil, err
@@ -39,7 +41,7 @@ func (s Sequence) Build(ctx interface {
 	}
 
 	ctx.Logger().Infof("commit")
-	ctx.TxChannel().Commit()
+	ch.Commit()
 
 	return ast.WrapSlice(items, s.Markers), nil
 }

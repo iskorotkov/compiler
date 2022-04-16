@@ -35,15 +35,7 @@ func (a SyntaxAnalyzer) Analyze(
 
 		ctx.Logger().Infof("syntax analysis started")
 
-		res, err := bnf.Program.Build(struct {
-			context.LoggerContext
-			context.NeutralizerContext
-			context.TxChannelContext
-		}{
-			LoggerContext:      ctx,
-			NeutralizerContext: ctx,
-			TxChannelContext:   context.NewTxChannelContext(channel.NewTxChannel(input)),
-		})
+		res, err := bnf.Program.Build(ctx, channel.NewTxChannel(input))
 
 		if err != nil {
 			ctx.Logger().Errorf("error during syntax analysis: %v", err)

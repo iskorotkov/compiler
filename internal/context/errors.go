@@ -1,6 +1,8 @@
 package context
 
 import (
+	"fmt"
+	"sort"
 	"sync"
 
 	"github.com/iskorotkov/compiler/internal/data/literal"
@@ -11,6 +13,10 @@ var _ ErrorsContext = (*errorsContext)(nil)
 type Error struct {
 	literal.Position
 	error
+}
+
+func (e Error) Error() string {
+	return fmt.Sprintf("%s: %s", e.Position, e.error)
 }
 
 type errorsContext struct {
@@ -31,6 +37,10 @@ func (e *errorsContext) AddError(position literal.Position, err error) {
 func (e *errorsContext) Errors() []Error {
 	e.m.Lock()
 	defer e.m.Unlock()
+
+	sort.SliceStable(e.errors, func(i, j int) bool {
+		return e.errors[i].Position.Before(e.errors[j].Position)
+	})
 
 	return e.errors
 }
