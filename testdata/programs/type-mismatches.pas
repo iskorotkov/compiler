@@ -7,7 +7,7 @@ type my_type = real;
      int = integer;
 var p, square, res, R, res: real;
 begin
-  p := 16.0 + 2 * PI * R - 1;
-  square := PI * R * R;
+  p := 16 + 2 * PI * R - 1;
+  square := PI * R * R + true;
   res := 14.5 * p + 123 + square + 12.7128;
 end.
