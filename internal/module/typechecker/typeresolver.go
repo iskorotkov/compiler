@@ -9,6 +9,57 @@ import (
 	"github.com/iskorotkov/compiler/internal/data/token"
 )
 
+var opGroups = []opGroup{
+	{
+		tokens: map[token.ID]bool{
+			token.Eq:  true,
+			token.Ne:  true,
+			token.Lt:  true,
+			token.Lte: true,
+			token.Gt:  true,
+			token.Gte: true,
+		},
+		expectedType:  symbol.BuiltinTypeUnknown,
+		resultingType: symbol.BuiltinTypeBool,
+	},
+	{
+		tokens: map[token.ID]bool{
+			token.And: true,
+			token.Or:  true,
+			token.Xor: true,
+		},
+		expectedType:  symbol.BuiltinTypeBool,
+		resultingType: symbol.BuiltinTypeBool,
+	},
+	{
+		tokens: map[token.ID]bool{
+			token.Plus:     true,
+			token.Minus:    true,
+			token.Multiply: true,
+			token.Divide:   true,
+			token.Mod:      true,
+		},
+		expectedType:  symbol.BuiltinTypeUnknown,
+		resultingType: symbol.BuiltinTypeUnknown,
+	},
+	{
+		tokens: map[token.ID]bool{
+			token.Not: true,
+		},
+		expectedType:  symbol.BuiltinTypeBool,
+		resultingType: symbol.BuiltinTypeBool,
+	},
+}
+
+type opGroup struct {
+	// Which tokens are in the group.
+	tokens map[token.ID]bool
+	// Expected type of the left and right operands.
+	expectedType symbol.BuiltinType
+	// Resulting type of the operation.
+	resultingType symbol.BuiltinType
+}
+
 type TypeResolver struct {
 	converter TypeConverter
 }
@@ -17,45 +68,85 @@ func NewTypeResolver(converter TypeConverter) TypeResolver {
 	return TypeResolver{converter: converter}
 }
 
-func (r TypeResolver) ResolveExpr(
+func (r TypeResolver) Resolve(
 	ctx interface {
 		context.LoggerContext
-		context.SymbolScopeContext
 	},
+	scope symbol.Scope,
 	expr ast.Node,
 ) (symbol.BuiltinType, error) {
-	// TODO: Split expression into subexpressions when &&, ||, <, >, <=, >=, =, <>, etc. are encountered.
-	linearized := linearizeExpressionTokens(expr)
+	leafs := linearizeExpressionTokens(expr)
+	return r.resolveLinearExpr(ctx, scope, leafs)
+}
+
+func (r TypeResolver) resolveLinearExpr(
+	ctx interface {
+		context.LoggerContext
+	},
+	scope symbol.Scope,
+	leafs []*ast.Leaf,
+) (symbol.BuiltinType, error) {
+	for _, group := range opGroups {
+		for i, leaf := range leafs {
+			if !group.tokens[leaf.ID] {
+				continue
+			}
+
+			leftType, err := r.resolveLinearExpr(ctx, scope, leafs[:i])
+			if err != nil {
+				return leftType, err
+			}
+
+			rightType, err := r.resolveLinearExpr(ctx, scope, leafs[i+1:])
+			if err != nil {
+				return rightType, err
+			}
+
+			// Check if left operand has type compatible with given operation.
+			if _, ok := r.converter.IsAssignable(leftType, group.expectedType); !ok {
+				return symbol.BuiltinTypeUnknown, fmt.Errorf("left operand has incompatible type %s", leftType)
+			}
+
+			// Check if right operand has type compatible with given operation.
+			if _, ok := r.converter.IsAssignable(leftType, group.expectedType); !ok {
+				return symbol.BuiltinTypeUnknown, fmt.Errorf("right operand has incompatible type %s", rightType)
+			}
+
+			// Check if operands have compatible types (can be cast one to another).
+			if _, ok := r.converter.IsAssignable(rightType, leftType); !ok {
+				return symbol.BuiltinTypeUnknown, fmt.Errorf("operands have incompatible types %s and %s", leftType, rightType)
+			}
+
+			if group.resultingType != symbol.BuiltinTypeUnknown {
+				return group.resultingType, nil
+			}
+
+			return leftType, nil
+		}
+	}
 
 	var valuesOnly []*ast.Leaf
-	for _, item := range linearized {
+	for _, item := range leafs {
 		switch item.ID {
 		case token.UserDefined, token.IntLiteral, token.DoubleLiteral, token.BoolLiteral:
 			valuesOnly = append(valuesOnly, item)
 		}
 	}
 
-	return subExpressionType(ctx, r.converter, valuesOnly)
+	return r.subExpressionType(scope, valuesOnly)
 }
 
-func subExpressionType(
-	ctx interface {
-		context.LoggerContext
-		context.SymbolScopeContext
-	},
-	converter TypeConverter,
-	linearized []*ast.Leaf,
-) (symbol.BuiltinType, error) {
+func (r TypeResolver) subExpressionType(scope symbol.Scope, linearized []*ast.Leaf) (symbol.BuiltinType, error) {
 	currentType := symbol.BuiltinTypeUnknown
 	for _, leaf := range linearized {
-		leafType, err := getLeafType(ctx, leaf)
+		leafType, err := getLeafType(scope, leaf)
 		if err != nil {
 			return symbol.BuiltinTypeUnknown, err
 		}
 
-		newType, ok := converter.Convert(ctx, leafType, currentType)
+		newType, ok := r.converter.IsAssignable(leafType, currentType)
 		if !ok {
-			return symbol.BuiltinTypeUnknown, fmt.Errorf("can't assign type %s to %s", leafType, currentType)
+			return symbol.BuiltinTypeUnknown, fmt.Errorf("can't cast type %s to %s", leafType, currentType)
 		}
 
 		currentType = newType
@@ -64,12 +155,7 @@ func subExpressionType(
 	return currentType, nil
 }
 
-func getLeafType(
-	ctx interface {
-		context.SymbolScopeContext
-	},
-	leaf *ast.Leaf,
-) (symbol.BuiltinType, error) {
+func getLeafType(scope symbol.Scope, leaf *ast.Leaf) (symbol.BuiltinType, error) {
 	switch leaf.ID {
 	case token.IntLiteral:
 		return symbol.BuiltinTypeInt, nil
@@ -78,7 +164,7 @@ func getLeafType(
 	case token.BoolLiteral:
 		return symbol.BuiltinTypeBool, nil
 	case token.UserDefined:
-		s, ok := ctx.SymbolScope().Lookup(&symbol.Name{Name: leaf.Value})
+		s, ok := scope.Lookup(&symbol.Name{Name: leaf.Value})
 		if !ok {
 			return symbol.BuiltinTypeUnknown, fmt.Errorf("symbol %s not found", leaf.Value)
 		}
@@ -97,26 +183,18 @@ func getLeafType(
 }
 
 func linearizeExpressionTokens(expr ast.Node) []*ast.Leaf {
-	var tokens []*ast.Leaf
-
-	// DFS.
-	stack := []ast.Node{expr}
-	for len(stack) != 0 {
-		var generation []ast.Node
-		for _, e := range stack {
-			switch t := e.(type) {
-			case *ast.Branch:
-				// Traverse all branch children.
-				for _, item := range t.Items {
-					generation = append(generation, item)
-				}
-			case *ast.Leaf:
-				tokens = append(tokens, t)
-			}
+	switch expr := expr.(type) {
+	case *ast.Branch:
+		// DFS.
+		var tokens []*ast.Leaf
+		for _, item := range expr.Items {
+			tokens = append(tokens, linearizeExpressionTokens(item)...)
 		}
 
-		stack = generation
+		return tokens
+	case *ast.Leaf:
+		return []*ast.Leaf{expr}
+	default:
+		panic(fmt.Errorf("unexpected expression type %T", expr))
 	}
-
-	return tokens
 }

@@ -5,7 +5,6 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/iskorotkov/compiler/internal/data/symbol"
 	"github.com/iskorotkov/compiler/internal/module/syntax_neutralizer"
 )
 
@@ -15,7 +14,6 @@ type prodContext struct {
 	context.Context
 	errorsContext
 	neutralizerContext
-	symbolScopeContext
 	logger *zap.SugaredLogger
 }
 
@@ -33,6 +31,5 @@ func NewProdContext(ctx context.Context) FullContext {
 		logger:             zap.NewNop().Sugar(),
 		errorsContext:      errorsContext{},
 		neutralizerContext: neutralizerContext{neutralizer: syntax_neutralizer.New(1)},
-		symbolScopeContext: symbolScopeContext{scope: symbol.NewScope()},
 	}
 }

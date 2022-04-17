@@ -59,13 +59,13 @@ func (s Scope) Add(symbol Symbol) error {
 	return nil
 }
 
-func (s *Scope) SubScope(symbols []Symbol) *Scope {
+func (s *Scope) SubScope(symbols []Symbol) Scope {
 	m := make(map[int]Symbol)
 	for _, symbol := range symbols {
 		m[symbol.Hash()] = symbol
 	}
 
-	return &Scope{
+	return Scope{
 		parent:  s,
 		symbols: m,
 	}

@@ -6,7 +6,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/iskorotkov/compiler/internal/data/literal"
-	"github.com/iskorotkov/compiler/internal/data/symbol"
 	"github.com/iskorotkov/compiler/internal/module/syntax_neutralizer"
 )
 
@@ -15,7 +14,6 @@ type FullContext interface {
 	LoggerContext
 	ErrorsContext
 	NeutralizerContext
-	SymbolScopeContext
 }
 
 type LoggerContext interface {
@@ -30,8 +28,4 @@ type ErrorsContext interface {
 
 type NeutralizerContext interface {
 	Neutralizer() syntax_neutralizer.Neutralizer
-}
-
-type SymbolScopeContext interface {
-	SymbolScope() symbol.Scope
 }

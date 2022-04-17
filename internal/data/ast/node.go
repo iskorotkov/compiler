@@ -7,13 +7,21 @@ import (
 	"github.com/iskorotkov/compiler/internal/data/token"
 )
 
+const (
+	QueryTypeOne QueryType = iota
+	QueryTypeTop
+	QueryTypeRecursive
+)
+
 var (
 	_ Node = (*Leaf)(nil)
 	_ Node = (*Branch)(nil)
 )
 
+type QueryType int
+
 type Node interface {
-	Query(markers ...Marker) []Node
+	Query(queryType QueryType, markers ...Marker) []Node
 	Has(marker Marker) bool
 	Position() literal.Position
 	fmt.Stringer
@@ -63,7 +71,7 @@ type Leaf struct {
 	Markers
 }
 
-func (l *Leaf) Query(markers ...Marker) []Node {
+func (l *Leaf) Query(_ QueryType, markers ...Marker) []Node {
 	for _, marker := range markers {
 		if l.Has(marker) {
 			return []Node{l}
@@ -82,17 +90,28 @@ type Branch struct {
 	Markers
 }
 
-func (b *Branch) Query(markers ...Marker) []Node {
+func (b *Branch) Query(queryType QueryType, markers ...Marker) []Node {
+	var res []Node
 	for _, marker := range markers {
 		if b.Has(marker) {
-			// By default, we don't want to descend into the children of a branch.
-			return []Node{b}
+			res = append(res, b)
+
+			// If we want single node or top nodes only, we can stop here.
+			if queryType == QueryTypeOne || queryType == QueryTypeTop {
+				return res
+			}
+
+			break
 		}
 	}
 
-	var res []Node
 	for _, item := range b.Items {
-		res = append(res, item.Query(markers...)...)
+		res = append(res, item.Query(queryType, markers...)...)
+
+		// If we want single node only, we can stop here.
+		if len(res) != 0 && queryType == QueryTypeOne {
+			return res
+		}
 	}
 
 	return res

@@ -31,7 +31,7 @@ func NewTypeConverter() TypeConverter {
 	}
 }
 
-func (c TypeConverter) Convert(ctx interface{}, from, to symbol.BuiltinType) (symbol.BuiltinType, bool) {
+func (c TypeConverter) IsAssignable(from, to symbol.BuiltinType) (symbol.BuiltinType, bool) {
 	val, ok := c.possibleConversions[from][to]
 	return val, ok
 }

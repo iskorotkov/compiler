@@ -26,6 +26,25 @@ const (
 	MarkerLeftSide
 	MarkerRightSide
 
+	// Functions.
+
+	MarkerFuncCall
+	MarkerFuncArg
+
+	// Control flow.
+
+	MarkerForHeader
+	MarkerIfExpr
+	MarkerWhileExpr
+	MarkerRepeatExpr
+
+	// Blocks.
+
+	MarkerBlock
+	MarkerProgramBlock
+	MarkerDeclarations
+	MarkerOperators
+
 	// Common.
 
 	MarkerName
@@ -55,9 +74,14 @@ func (ms Markers) Merge(other Markers) Markers {
 		return ms
 	}
 
-	for k, v := range other {
-		ms[k] = v
+	m := make(Markers)
+	for k, v := range ms {
+		m[k] = v
 	}
 
-	return ms
+	for k, v := range other {
+		m[k] = v
+	}
+
+	return m
 }

@@ -30,7 +30,6 @@ func (c TypeChecker) Check(
 		context.LoggerContext
 		context.ErrorsContext
 		context.NeutralizerContext
-		context.SymbolScopeContext
 	},
 	input <-chan option.Option[ast.Node],
 ) <-chan option.Option[interface{}] {
@@ -48,68 +47,11 @@ func (c TypeChecker) Check(
 				continue
 			}
 
-			addTypeDecls(ctx, program)
-			addConstDecls(ctx, program)
-			addVarDecls(ctx, program)
-			addFuncDecls(ctx, program)
+			block := program.Query(ast.QueryTypeOne, ast.MarkerProgramBlock)[0]
 
-			// TODO: Remove expressions in function names.
-			expressions := program.Query(ast.MarkerExpr)
-			for _, e := range expressions {
-				if _, err := c.resolver.ResolveExpr(ctx, e); err != nil {
-					ctx.AddError(e.Position(), err)
-					continue
-				}
-			}
+			scope := symbol.NewScope()
 
-			assignments := program.Query(ast.MarkerAssign)
-			for _, a := range assignments {
-				leftSide := a.Query(ast.MarkerLeftSide)
-				if len(leftSide) != 1 {
-					ctx.Logger().Errorf("unexpected left side of assignment: %v", leftSide)
-					continue
-				}
-
-				v := leftSide[0].(*ast.Leaf)
-				vSymbol, ok := ctx.SymbolScope().Lookup(&symbol.Name{Name: v.Value})
-				if !ok {
-					ctx.AddError(v.Position(), fmt.Errorf("undeclared variable: %s", v.Value))
-					continue
-				}
-
-				if _, ok := vSymbol.(*symbol.Var); !ok {
-					ctx.AddError(v.Position(), fmt.Errorf("symbol is not a variable: %s", v.Value))
-					continue
-				}
-
-				rightSide := a.Query(ast.MarkerRightSide)
-				if len(rightSide) != 1 {
-					ctx.Logger().Errorf("unexpected right side of assignment: %v", rightSide)
-					continue
-				}
-
-				expr := rightSide[0].Query(ast.MarkerExpr)
-				if len(expr) != 1 {
-					ctx.Logger().Errorf("unexpected expression in assignment: %v", expr)
-					continue
-				}
-
-				exprType, err := c.resolver.ResolveExpr(ctx, expr[0])
-				if err != nil {
-					ctx.AddError(a.Position(), err)
-					continue
-				}
-
-				if _, ok := c.converter.Convert(ctx, exprType, vSymbol.(*symbol.Var).Type.BuiltinType); !ok {
-					ctx.AddError(a.Position(), fmt.Errorf("type mismatch: %s", vSymbol.(*symbol.Var).Type.BuiltinType))
-					continue
-				}
-			}
-
-			ctx.Logger().Infof("type checker found %d symbols", len(ctx.SymbolScope().Symbols()))
-			for _, s := range ctx.SymbolScope().Symbols() {
-				ctx.Logger().Infof("%d: %v", s.Hash(), s)
-			}
+			c.checkBlock(ctx, scope, block)
 		}
 
 		ctx.Logger().Infof("type checking succeeded")
@@ -118,19 +60,181 @@ func (c TypeChecker) Check(
 	return ch
 }
 
-func addFuncDecls(
+func (c TypeChecker) checkBlock(
 	ctx interface {
 		context.LoggerContext
 		context.ErrorsContext
 		context.NeutralizerContext
-		context.SymbolScopeContext
-	}, program ast.Node,
+	},
+	scope symbol.Scope,
+	block ast.Node,
 ) {
-	for _, decl := range program.Query(ast.MarkerFuncDecl) {
-		name := decl.Query(ast.MarkerFuncName)[0].(*ast.Leaf)
-		returnType := decl.Query(ast.MarkerReturnType)[0].Query(ast.MarkerType)[0].(*ast.Leaf)
+	c.addTypeDecls(ctx, scope, block)
+	c.addConstDecls(ctx, scope, block)
+	c.addVarDecls(ctx, scope, block)
+	c.addFuncDecls(ctx, scope, block)
 
-		returnTypeSymbol, ok := ctx.SymbolScope().Lookup(&symbol.Name{Name: returnType.Value})
+	c.checkAssignments(ctx, scope, block)
+	c.checkFlowOperators(ctx, scope, block)
+	c.checkFunctionCalls(ctx, scope, block)
+
+	ctx.Logger().Infof("type checker found %d symbols in current scope", len(scope.Symbols()))
+	for _, s := range scope.Symbols() {
+		ctx.Logger().Infof("%d: %v", s.Hash(), s)
+	}
+}
+
+func (c TypeChecker) checkFunctionCalls(
+	ctx interface {
+		context.LoggerContext
+		context.ErrorsContext
+		context.NeutralizerContext
+	},
+	scope symbol.Scope,
+	program ast.Node,
+) {
+	calls := program.Query(ast.QueryTypeTop, ast.MarkerFuncCall)
+	for _, call := range calls {
+		name := call.Query(ast.QueryTypeOne, ast.MarkerFuncName)[0].(*ast.Leaf)
+
+		sym, ok := scope.Lookup(&symbol.Name{Name: name.Value})
+		if !ok {
+			ctx.AddError(name.Position(), fmt.Errorf("unknown function %s", name.Value))
+			continue
+		}
+
+		args := call.Query(ast.QueryTypeTop, ast.MarkerFuncArg)
+		switch sym := sym.(type) {
+		case *symbol.Var, *symbol.Const:
+			continue
+		case *symbol.Func:
+			if len(args) != len(sym.Params) {
+				ctx.AddError(name.Position(), fmt.Errorf("wrong number of arguments for function %s", name.Value))
+				continue
+			}
+
+			for i, arg := range args {
+				argType, err := c.resolver.Resolve(ctx, scope, arg)
+				if err != nil {
+					ctx.AddError(arg.Position(), err)
+					continue
+				}
+
+				if _, ok := c.converter.IsAssignable(argType, sym.Params[i].Type.BuiltinType); ok {
+					ctx.AddError(arg.Position(), fmt.Errorf("wrong type of argument %d for function %s", i, name.Value))
+					continue
+				}
+			}
+		default:
+			panic(fmt.Errorf("unexpected symbol type %T", sym))
+		}
+	}
+}
+
+func (c TypeChecker) checkFlowOperators(
+	ctx interface {
+		context.LoggerContext
+		context.ErrorsContext
+		context.NeutralizerContext
+	},
+	scope symbol.Scope,
+	program ast.Node,
+) {
+	forHeaders := program.Query(ast.QueryTypeTop, ast.MarkerForHeader)
+	for _, header := range forHeaders {
+		expressions := header.Query(ast.QueryTypeTop, ast.MarkerExpr)
+		fromExpr, toExpr := expressions[0], expressions[1]
+
+		fromType, err := c.resolver.Resolve(ctx, scope, fromExpr)
+		if err != nil {
+			ctx.AddError(fromExpr.Position(), err)
+			continue
+		}
+
+		toType, err := c.resolver.Resolve(ctx, scope, toExpr)
+		if err != nil {
+			ctx.AddError(toExpr.Position(), err)
+			continue
+		}
+
+		if fromType != symbol.BuiltinTypeInt || toType != symbol.BuiltinTypeInt {
+			ctx.AddError(fromExpr.Position().Join(toExpr.Position()), fmt.Errorf("range in for loop must have int type"))
+			continue
+		}
+	}
+
+	conditions := program.Query(ast.QueryTypeTop,
+		ast.MarkerIfExpr,
+		ast.MarkerWhileExpr,
+		ast.MarkerRepeatExpr,
+	)
+	for _, condition := range conditions {
+		conditionType, err := c.resolver.Resolve(ctx, scope, condition)
+		if err != nil {
+			ctx.AddError(condition.Position(), err)
+			continue
+		}
+
+		if conditionType != symbol.BuiltinTypeBool {
+			ctx.AddError(condition.Position(), fmt.Errorf("condition in if/while/repeat statement must have bool type"))
+			continue
+		}
+	}
+}
+
+func (c TypeChecker) checkAssignments(
+	ctx interface {
+		context.LoggerContext
+		context.ErrorsContext
+		context.NeutralizerContext
+	},
+	scope symbol.Scope,
+	program ast.Node,
+) {
+	assignments := program.Query(ast.QueryTypeRecursive, ast.MarkerAssign)
+	for _, a := range assignments {
+		v := a.Query(ast.QueryTypeOne, ast.MarkerLeftSide)[0].(*ast.Leaf)
+
+		vSymbol, ok := scope.Lookup(&symbol.Name{Name: v.Value})
+		if !ok {
+			ctx.AddError(v.Position(), fmt.Errorf("undeclared variable: %s", v.Value))
+			continue
+		}
+
+		if _, ok := vSymbol.(*symbol.Var); !ok {
+			ctx.AddError(v.Position(), fmt.Errorf("symbol is not a variable: %s", v.Value))
+			continue
+		}
+
+		expr := a.Query(ast.QueryTypeOne, ast.MarkerRightSide)[0].Query(ast.QueryTypeOne, ast.MarkerExpr)
+
+		exprType, err := c.resolver.Resolve(ctx, scope, expr[0])
+		if err != nil {
+			ctx.AddError(a.Position(), err)
+			continue
+		}
+
+		if _, ok := c.converter.IsAssignable(exprType, vSymbol.(*symbol.Var).Type.BuiltinType); !ok {
+			ctx.AddError(a.Position(), fmt.Errorf("type mismatch: %s", vSymbol.(*symbol.Var).Type.BuiltinType))
+			continue
+		}
+	}
+}
+
+func (c TypeChecker) addFuncDecls(
+	ctx interface {
+		context.LoggerContext
+		context.ErrorsContext
+		context.NeutralizerContext
+	},
+	scope symbol.Scope,
+	program ast.Node,
+) {
+	for _, decl := range program.Query(ast.QueryTypeTop, ast.MarkerFuncDecl) {
+		name := decl.Query(ast.QueryTypeOne, ast.MarkerFuncName)[0].(*ast.Leaf)
+		returnType := decl.Query(ast.QueryTypeOne, ast.MarkerReturnType)[0].Query(ast.QueryTypeOne, ast.MarkerType)[0].(*ast.Leaf)
+
+		returnTypeSymbol, ok := scope.Lookup(&symbol.Name{Name: returnType.Value})
 		if !ok {
 			ctx.AddError(returnType.Position(), fmt.Errorf("type %s not found", returnType.Value))
 			continue
@@ -142,55 +246,70 @@ func addFuncDecls(
 		}
 
 		var params []symbol.Var
-		for _, param := range decl.Query(ast.MarkerParamGroupDecl) {
-			for _, name := range param.Query(ast.MarkerName) {
-				paramName := name.(*ast.Leaf)
-				paramType := param.Query(ast.MarkerType)[0].(*ast.Leaf)
-				paramTypeSymbol, ok := ctx.SymbolScope().Lookup(&symbol.Name{Name: paramType.Value})
-				if !ok {
-					ctx.AddError(paramType.Position(), fmt.Errorf("type %s not found", paramType.Value))
-					continue
-				}
-
-				if _, ok := paramTypeSymbol.(*symbol.Type); !ok {
-					ctx.AddError(paramType.Position(), fmt.Errorf("symbol %s is not a type", paramType.Value))
-					continue
-				}
-
-				params = append(params, symbol.Var{
-					Token:       paramName.Token,
-					Type:        *paramTypeSymbol.(*symbol.Type),
-					Initialized: false,
-				})
+		for _, param := range decl.Query(ast.QueryTypeTop, ast.MarkerParamGroupDecl) {
+			paramName := param.Query(ast.QueryTypeOne, ast.MarkerName)[0].(*ast.Leaf)
+			paramType := param.Query(ast.QueryTypeOne, ast.MarkerType)[0].(*ast.Leaf)
+			paramTypeSymbol, ok := scope.Lookup(&symbol.Name{Name: paramType.Value})
+			if !ok {
+				ctx.AddError(paramType.Position(), fmt.Errorf("type %s not found", paramType.Value))
+				continue
 			}
+
+			if _, ok := paramTypeSymbol.(*symbol.Type); !ok {
+				ctx.AddError(paramType.Position(), fmt.Errorf("symbol %s is not a type", paramType.Value))
+				continue
+			}
+
+			params = append(params, symbol.Var{
+				Token:       paramName.Token,
+				Type:        *paramTypeSymbol.(*symbol.Type),
+				Initialized: false,
+			})
 		}
 
-		if err := ctx.SymbolScope().Add(&symbol.Func{
+		functionSymbol := &symbol.Func{
 			Token:      name.Token,
 			Params:     params,
 			ReturnType: *returnTypeSymbol.(*symbol.Type),
-		}); err != nil {
+		}
+
+		if err := scope.Add(functionSymbol); err != nil {
 			ctx.AddError(name.Position(), err)
 			continue
 		}
 
-		// TODO: Analyze variables, constants and types defined in function.
+		var functionSymbols []symbol.Symbol
+		for _, param := range params {
+			functionSymbols = append(functionSymbols, &param)
+		}
+
+		functionSymbols = append(functionSymbols, &symbol.Var{
+			Token:       functionSymbol.Token,
+			Type:        functionSymbol.ReturnType,
+			Initialized: false,
+		})
+
+		functionScope := scope.SubScope(functionSymbols)
+		functionBlock := decl.Query(ast.QueryTypeOne, ast.MarkerBlock)[0]
+
+		c.checkBlock(ctx, functionScope, functionBlock)
 	}
 }
 
-func addTypeDecls(
+func (c TypeChecker) addTypeDecls(
 	ctx interface {
 		context.LoggerContext
 		context.ErrorsContext
 		context.NeutralizerContext
-		context.SymbolScopeContext
-	}, program ast.Node,
+	},
+	scope symbol.Scope,
+	program ast.Node,
 ) {
-	for _, decl := range program.Query(ast.MarkerTypeDecl) {
-		name := decl.Query(ast.MarkerName)[0].(*ast.Leaf)
-		typeName := decl.Query(ast.MarkerType)[0].(*ast.Leaf)
+	for _, decl := range program.Query(ast.QueryTypeTop, ast.MarkerTypeDecl) {
+		name := decl.Query(ast.QueryTypeOne, ast.MarkerName)[0].(*ast.Leaf)
+		typeName := decl.Query(ast.QueryTypeOne, ast.MarkerType)[0].(*ast.Leaf)
 
-		typeNameSymbol, ok := ctx.SymbolScope().Lookup(&symbol.Name{Name: typeName.Value})
+		typeNameSymbol, ok := scope.Lookup(&symbol.Name{Name: typeName.Value})
 		if !ok {
 			ctx.AddError(typeName.Position(), fmt.Errorf("type %s not found", typeName.Value))
 			continue
@@ -201,7 +320,7 @@ func addTypeDecls(
 			continue
 		}
 
-		if err := ctx.SymbolScope().Add(&symbol.Type{
+		if err := scope.Add(&symbol.Type{
 			Token:       name.Token,
 			Alias:       typeNameSymbol.(*symbol.Type),
 			BuiltinType: typeNameSymbol.(*symbol.Type).BuiltinType,
@@ -212,17 +331,18 @@ func addTypeDecls(
 	}
 }
 
-func addConstDecls(
+func (c TypeChecker) addConstDecls(
 	ctx interface {
 		context.LoggerContext
 		context.ErrorsContext
 		context.NeutralizerContext
-		context.SymbolScopeContext
-	}, program ast.Node,
+	},
+	scope symbol.Scope,
+	program ast.Node,
 ) {
-	for _, decl := range program.Query(ast.MarkerConstDecl) {
-		name := decl.Query(ast.MarkerName)[0].(*ast.Leaf)
-		valueNode := decl.Query(ast.MarkerValue)[0].(*ast.Leaf)
+	for _, decl := range program.Query(ast.QueryTypeTop, ast.MarkerConstDecl) {
+		name := decl.Query(ast.QueryTypeOne, ast.MarkerName)[0].(*ast.Leaf)
+		valueNode := decl.Query(ast.QueryTypeOne, ast.MarkerValue)[0].(*ast.Leaf)
 
 		var typeName string
 		switch valueNode.ID {
@@ -237,7 +357,7 @@ func addConstDecls(
 			continue
 		}
 
-		typeSymbol, ok := ctx.SymbolScope().Lookup(&symbol.Name{Name: typeName})
+		typeSymbol, ok := scope.Lookup(&symbol.Name{Name: typeName})
 		if !ok {
 			ctx.AddError(valueNode.Position(), fmt.Errorf("type %s not found", typeName))
 			continue
@@ -248,7 +368,7 @@ func addConstDecls(
 			continue
 		}
 
-		if err := ctx.SymbolScope().Add(&symbol.Const{
+		if err := scope.Add(&symbol.Const{
 			Token:    name.Token,
 			Type:     *typeSymbol.(*symbol.Type),
 			RawValue: valueNode.Value,
@@ -259,17 +379,18 @@ func addConstDecls(
 	}
 }
 
-func addVarDecls(
+func (c TypeChecker) addVarDecls(
 	ctx interface {
 		context.LoggerContext
 		context.ErrorsContext
 		context.NeutralizerContext
-		context.SymbolScopeContext
-	}, program ast.Node,
+	},
+	scope symbol.Scope,
+	program ast.Node,
 ) {
-	for _, decl := range program.Query(ast.MarkerVarDecl) {
-		typeName := decl.Query(ast.MarkerType)[0].(*ast.Leaf)
-		typeNameSymbol, ok := ctx.SymbolScope().Lookup(&symbol.Name{Name: typeName.Value})
+	for _, decl := range program.Query(ast.QueryTypeTop, ast.MarkerVarDecl) {
+		typeName := decl.Query(ast.QueryTypeOne, ast.MarkerType)[0].(*ast.Leaf)
+		typeNameSymbol, ok := scope.Lookup(&symbol.Name{Name: typeName.Value})
 		if !ok {
 			ctx.AddError(typeName.Position(), fmt.Errorf("type %s not found", typeName.Value))
 			continue
@@ -280,10 +401,10 @@ func addVarDecls(
 			continue
 		}
 
-		for _, name := range decl.Query(ast.MarkerName) {
+		for _, name := range decl.Query(ast.QueryTypeOne, ast.MarkerName) {
 			name := name.(*ast.Leaf)
 
-			if err := ctx.SymbolScope().Add(&symbol.Var{
+			if err := scope.Add(&symbol.Var{
 				Token: name.Token,
 				Type:  *typeNameSymbol.(*symbol.Type),
 			}); err != nil {

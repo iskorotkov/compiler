@@ -14,7 +14,7 @@ var (
 func init() {
 	If = Sequence{Name: "if", BNFs: []BNF{
 		Token{ID: token.If},
-		&Expression,
+		Sequence{BNFs: []BNF{&Expression}, Markers: ast.Markers{ast.MarkerIfExpr: true}},
 		Token{ID: token.Then},
 		&Operator,
 		Optional{BNF: Sequence{BNFs: []BNF{
@@ -204,7 +204,7 @@ func init() {
 		&Expression,
 		&Variable,
 		&FunctionName,
-	}}
+	}, Markers: ast.Markers{ast.MarkerFuncArg: true}}
 
 	FunctionHeader = Sequence{Name: "function-header", BNFs: []BNF{
 		Token{ID: token.Function},
@@ -223,12 +223,12 @@ func init() {
 		Token{ID: token.Colon},
 		&FunctionReturnType,
 		Token{ID: token.Semicolon},
-	}, Markers: ast.Markers{ast.MarkerFuncDecl: true}}
+	}}
 
 	FunctionDefinition = Sequence{Name: "function-definition", BNFs: []BNF{
 		&FunctionHeader,
 		&Block,
-	}}
+	}, Markers: ast.Markers{ast.MarkerFuncDecl: true}}
 
 	FunctionUsage = Sequence{Name: "function-usage", BNFs: []BNF{
 		&FunctionName,
@@ -243,7 +243,7 @@ func init() {
 			}}},
 			Token{ID: token.ClosingParenthesis},
 		}}},
-	}}
+	}, Markers: ast.Markers{ast.MarkerFuncCall: true}}
 }
 
 // Loops.
@@ -258,7 +258,7 @@ var (
 func init() {
 	While = Sequence{Name: "while", BNFs: []BNF{
 		Token{ID: token.While},
-		&Expression,
+		Sequence{BNFs: []BNF{&Expression}, Markers: ast.Markers{ast.MarkerWhileExpr: true}},
 		Token{ID: token.Do},
 		&Operator,
 	}}
@@ -271,7 +271,7 @@ func init() {
 			&Operator,
 		}}},
 		Token{ID: token.Until},
-		&Expression,
+		Sequence{BNFs: []BNF{&Expression}, Markers: ast.Markers{ast.MarkerRepeatExpr: true}},
 	}}
 
 	Direction = Either{Name: "direction", BNFs: []BNF{
@@ -280,13 +280,15 @@ func init() {
 	}}
 
 	For = Sequence{Name: "for", BNFs: []BNF{
-		Token{ID: token.For},
-		Token{ID: token.UserDefined},
-		Token{ID: token.Assign},
-		&Expression,
-		&Direction,
-		&Expression,
-		Token{ID: token.Do},
+		Sequence{BNFs: []BNF{
+			Token{ID: token.For},
+			Token{ID: token.UserDefined},
+			Token{ID: token.Assign},
+			&Expression,
+			&Direction,
+			&Expression,
+			Token{ID: token.Do},
+		}, Markers: ast.Markers{ast.MarkerForHeader: true}},
 		&Operator,
 	}}
 }
@@ -421,18 +423,20 @@ var (
 
 func init() {
 	Block = Sequence{Name: "block", BNFs: []BNF{
-		&Constants,
-		&Types,
-		&Variables,
-		&Functions,
-		&Operators,
-	}}
+		Sequence{BNFs: []BNF{
+			&Constants,
+			&Types,
+			&Variables,
+			&Functions,
+		}, Markers: ast.Markers{ast.MarkerDeclarations: true}},
+		Sequence{BNFs: []BNF{&Operators}, Markers: ast.Markers{ast.MarkerOperators: true}},
+	}, Markers: ast.Markers{ast.MarkerBlock: true}}
 
 	Program = Sequence{Name: "program", BNFs: []BNF{
 		Token{ID: token.Program},
 		Token{ID: token.UserDefined},
 		Token{ID: token.Semicolon},
-		&Block,
+		Sequence{BNFs: []BNF{&Block}, Markers: ast.Markers{ast.MarkerProgramBlock: true}},
 		Token{ID: token.Period},
 		Token{ID: token.EOF},
 	}}
