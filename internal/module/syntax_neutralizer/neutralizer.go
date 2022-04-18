@@ -46,8 +46,6 @@ func (n Neutralizer) Neutralize(expected token.ID, actual token.Token) (token.To
 			return actual, fmt.Errorf("expected %v, got %v: %w", expected, actual, UnfixableError)
 		}
 
-		// TODO: Store info about neutralized errors somewhere.
-		// TODO: Fix typos in "end" keyword.
 		actual.ID = expected
 		actual.Value = expectedTokenValue
 
