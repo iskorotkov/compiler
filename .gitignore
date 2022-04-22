@@ -6,4 +6,4 @@
 
 compiler
 main.wat
-main.wasm
+*.wasm
