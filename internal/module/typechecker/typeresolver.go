@@ -12,6 +12,15 @@ import (
 var opGroups = []opGroup{
 	{
 		tokens: map[token.ID]bool{
+			token.And: true,
+			token.Or:  true,
+			token.Xor: true,
+		},
+		expectedType:  symbol.BuiltinTypeBool,
+		resultingType: symbol.BuiltinTypeBool,
+	},
+	{
+		tokens: map[token.ID]bool{
 			token.Eq:  true,
 			token.Ne:  true,
 			token.Lt:  true,
@@ -20,15 +29,6 @@ var opGroups = []opGroup{
 			token.Gte: true,
 		},
 		expectedType:  symbol.BuiltinTypeUnknown,
-		resultingType: symbol.BuiltinTypeBool,
-	},
-	{
-		tokens: map[token.ID]bool{
-			token.And: true,
-			token.Or:  true,
-			token.Xor: true,
-		},
-		expectedType:  symbol.BuiltinTypeBool,
 		resultingType: symbol.BuiltinTypeBool,
 	},
 }
