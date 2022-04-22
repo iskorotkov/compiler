@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Compiler</title>
+  </head>
+  <body></body>
+  <script>
+    const importObject = {
+      console: {
+        log: console.log,
+      },
+    }
+
+    WebAssembly.instantiateStreaming(fetch('/main.wasm'), importObject).then(
+      (obj) => {
+        console.log('loaded wasm file')
+        obj.instance.exports.main()
+        console.log('wasm file executed')
+      },
+    )
+  </script>
+</html>
