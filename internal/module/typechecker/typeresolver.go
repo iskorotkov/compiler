@@ -31,24 +31,6 @@ var opGroups = []opGroup{
 		expectedType:  symbol.BuiltinTypeBool,
 		resultingType: symbol.BuiltinTypeBool,
 	},
-	{
-		tokens: map[token.ID]bool{
-			token.Plus:     true,
-			token.Minus:    true,
-			token.Multiply: true,
-			token.Divide:   true,
-			token.Mod:      true,
-		},
-		expectedType:  symbol.BuiltinTypeUnknown,
-		resultingType: symbol.BuiltinTypeUnknown,
-	},
-	{
-		tokens: map[token.ID]bool{
-			token.Not: true,
-		},
-		expectedType:  symbol.BuiltinTypeBool,
-		resultingType: symbol.BuiltinTypeBool,
-	},
 }
 
 type opGroup struct {
@@ -88,6 +70,17 @@ func (r TypeResolver) resolveLinearExpr(
 ) (symbol.BuiltinType, error) {
 	for _, group := range opGroups {
 		for i, leaf := range leafs {
+			if leaf.ID == token.Not {
+				t, err := getLeafType(scope, leafs[i+1])
+				if err != nil {
+					return symbol.BuiltinTypeUnknown, err
+				}
+
+				if t != symbol.BuiltinTypeBool {
+					return symbol.BuiltinTypeUnknown, fmt.Errorf("unsupported type for not: %s", t)
+				}
+			}
+
 			if !group.tokens[leaf.ID] {
 				continue
 			}
