@@ -21,7 +21,7 @@ func init() {
 			Token{ID: token.Else},
 			&Operator,
 		}}},
-	}}
+	}, Markers: ast.Markers{ast.MarkerIf: true}}
 }
 
 // Constants.
@@ -261,7 +261,7 @@ func init() {
 		Sequence{BNFs: []BNF{&Expression}, Markers: ast.Markers{ast.MarkerWhileExpr: true}},
 		Token{ID: token.Do},
 		&Operator,
-	}}
+	}, Markers: ast.Markers{ast.MarkerWhile: true}}
 
 	Repeat = Sequence{Name: "repeat", BNFs: []BNF{
 		Token{ID: token.Repeat},
@@ -272,7 +272,7 @@ func init() {
 		}}},
 		Token{ID: token.Until},
 		Sequence{BNFs: []BNF{&Expression}, Markers: ast.Markers{ast.MarkerRepeatExpr: true}},
-	}}
+	}, Markers: ast.Markers{ast.MarkerRepeat: true}}
 
 	Direction = Either{Name: "direction", BNFs: []BNF{
 		Token{ID: token.To},
@@ -290,7 +290,7 @@ func init() {
 			Token{ID: token.Do},
 		}, Markers: ast.Markers{ast.MarkerForHeader: true}},
 		&Operator,
-	}}
+	}, Markers: ast.Markers{ast.MarkerFor: true}}
 }
 
 // Operators.
@@ -430,7 +430,7 @@ func init() {
 			&Functions,
 		}, Markers: ast.Markers{ast.MarkerDeclarations: true}},
 		Sequence{BNFs: []BNF{&Operators}, Markers: ast.Markers{ast.MarkerOperators: true}},
-	}, Markers: ast.Markers{ast.MarkerBlock: true}}
+	}, Markers: ast.Markers{ast.MarkerFunctionBlock: true}}
 
 	Program = Sequence{Name: "program", BNFs: []BNF{
 		Token{ID: token.Program},

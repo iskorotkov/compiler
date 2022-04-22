@@ -10,6 +10,11 @@ import (
 	"github.com/iskorotkov/compiler/internal/fn/option"
 )
 
+type Result struct {
+	Node  ast.Node
+	Scope symbol.Scope
+}
+
 type TypeChecker struct {
 	buffer    int
 	converter TypeConverter
@@ -32,8 +37,8 @@ func (c TypeChecker) Check(
 		context.NeutralizerContext
 	},
 	input <-chan option.Option[ast.Node],
-) <-chan option.Option[interface{}] {
-	ch := make(chan option.Option[interface{}], c.buffer)
+) <-chan option.Option[Result] {
+	ch := make(chan option.Option[Result], c.buffer)
 
 	go func() {
 		defer close(ch)
@@ -52,6 +57,13 @@ func (c TypeChecker) Check(
 			scope := symbol.NewScope()
 
 			c.checkBlock(ctx, scope, block)
+
+			if len(ctx.Errors()) == 0 {
+				ch <- option.Ok(Result{
+					Node:  program,
+					Scope: scope,
+				})
+			}
 		}
 
 		ctx.Logger().Infof("type checking succeeded")
@@ -290,7 +302,7 @@ func (c TypeChecker) addFuncDecls(
 		})
 
 		functionScope := scope.SubScope(functionSymbols)
-		functionBlock := decl.Query(ast.QueryTypeOne, ast.MarkerBlock)[0]
+		functionBlock := decl.Query(ast.QueryTypeOne, ast.MarkerFunctionBlock)[0]
 
 		c.checkBlock(ctx, functionScope, functionBlock)
 	}

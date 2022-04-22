@@ -11,6 +11,7 @@ import (
 	"github.com/iskorotkov/compiler/internal/module/scanner"
 	"github.com/iskorotkov/compiler/internal/module/syntax_analyzer"
 	"github.com/iskorotkov/compiler/internal/module/typechecker"
+	"github.com/iskorotkov/compiler/internal/module/wasm"
 )
 
 func main() {
@@ -46,7 +47,8 @@ func compile(ctx context.FullContext, r io.Reader) {
 	checker := typechecker.NewTypeChecker(buffer)
 	results := checker.Check(ctx, programs)
 
-	<-results
+	generator := wasm.NewGenerator()
+	<-generator.Generate(ctx, results)
 
 	if len(ctx.Errors()) == 0 {
 		fmt.Println("compiled successfully")

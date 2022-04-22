@@ -33,14 +33,19 @@ const (
 
 	// Control flow.
 
-	MarkerForHeader
+	MarkerIf
+	MarkerFor
+	MarkerWhile
+	MarkerRepeat
+
 	MarkerIfExpr
+	MarkerForHeader
 	MarkerWhileExpr
 	MarkerRepeatExpr
 
 	// Blocks.
 
-	MarkerBlock
+	MarkerFunctionBlock
 	MarkerProgramBlock
 	MarkerDeclarations
 	MarkerOperators
