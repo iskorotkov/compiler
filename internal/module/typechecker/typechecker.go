@@ -401,7 +401,7 @@ func (c TypeChecker) addVarDecls(
 			continue
 		}
 
-		for _, name := range decl.Query(ast.QueryTypeOne, ast.MarkerName) {
+		for _, name := range decl.Query(ast.QueryTypeTop, ast.MarkerName) {
 			name := name.(*ast.Leaf)
 
 			if err := scope.Add(&symbol.Var{
