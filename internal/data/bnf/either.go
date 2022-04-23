@@ -21,6 +21,7 @@ type Either struct {
 func (e Either) Build(ctx interface {
 	context.LoggerContext
 	context.NeutralizerContext
+	context.ErrorsContext
 }, ch *channel.TxChannel[token.Token]) (ast.Node, error) {
 	ctx, cancel := context.Scoped(ctx, e.Name)
 	defer cancel()

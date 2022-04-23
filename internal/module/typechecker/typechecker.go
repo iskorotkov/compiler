@@ -46,16 +46,13 @@ func (c TypeChecker) Check(
 
 		for program := range input {
 			block := program.Query(ast.QueryTypeOne, ast.MarkerProgramBlock)[0]
-
 			scope := symbol.NewScope()
 
 			c.checkBlock(ctx, scope, block)
 
-			if len(ctx.Errors()) == 0 {
-				ch <- Result{
-					Node:  program,
-					Scope: scope,
-				}
+			ch <- Result{
+				Node:  program,
+				Scope: scope,
 			}
 		}
 
@@ -79,9 +76,13 @@ func (c TypeChecker) checkBlock(
 	c.addVarDecls(ctx, scope, block)
 	c.addFuncDecls(ctx, scope, block)
 
-	c.checkAssignments(ctx, scope, block)
-	c.checkFlowOperators(ctx, scope, block)
-	c.checkFunctionCalls(ctx, scope, block)
+	// TODO: Find a better way to find main program block.
+	operatorsBlocks := block.Query(ast.QueryTypeTop, ast.MarkerOperators)
+	mainBlock := operatorsBlocks[len(operatorsBlocks)-1]
+
+	c.checkAssignments(ctx, scope, mainBlock)
+	c.checkFlowOperators(ctx, scope, mainBlock)
+	c.checkFunctionCalls(ctx, scope, mainBlock)
 
 	ctx.Logger().Infof("type checker found %d symbols in current scope", len(scope.Symbols()))
 	for _, s := range scope.Symbols() {

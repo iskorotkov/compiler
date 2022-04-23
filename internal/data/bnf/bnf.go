@@ -13,6 +13,7 @@ type BNF interface {
 	Build(ctx interface {
 		context.LoggerContext
 		context.NeutralizerContext
+		context.ErrorsContext
 	}, ch *channel.TxChannel[token.Token]) (ast.Node, error)
 	fmt.Stringer
 }

@@ -6,7 +6,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/iskorotkov/compiler/internal/module/syntax_neutralizer"
+	"github.com/iskorotkov/compiler/internal/module/neutralizer"
 )
 
 var _ FullContext = (*devContext)(nil)
@@ -62,6 +62,6 @@ func NewDevContext(ctx context.Context) FullContext {
 			return logger.Sugar()
 		}(),
 		errorsContext:      errorsContext{},
-		neutralizerContext: neutralizerContext{neutralizer: syntax_neutralizer.New(1)},
+		neutralizerContext: neutralizerContext{neutralizer: neutralizer.New(1)},
 	}
 }

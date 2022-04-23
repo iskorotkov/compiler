@@ -20,6 +20,7 @@ type Sequence struct {
 func (s Sequence) Build(ctx interface {
 	context.LoggerContext
 	context.NeutralizerContext
+	context.ErrorsContext
 }, ch *channel.TxChannel[token.Token]) (ast.Node, error) {
 	ctx, cancel := context.Scoped(ctx, s.Name)
 	defer cancel()

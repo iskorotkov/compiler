@@ -21,6 +21,7 @@ type Optional struct {
 func (o Optional) Build(ctx interface {
 	context.LoggerContext
 	context.NeutralizerContext
+	context.ErrorsContext
 }, ch *channel.TxChannel[token.Token]) (ast.Node, error) {
 	ctx, cancel := context.Scoped(ctx, o.Name)
 	defer cancel()

@@ -6,7 +6,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/iskorotkov/compiler/internal/data/literal"
-	"github.com/iskorotkov/compiler/internal/module/syntax_neutralizer"
+	"github.com/iskorotkov/compiler/internal/module/neutralizer"
 )
 
 type FullContext interface {
@@ -27,5 +27,5 @@ type ErrorsContext interface {
 }
 
 type NeutralizerContext interface {
-	Neutralizer() syntax_neutralizer.Neutralizer
+	Neutralizer() neutralizer.Neutralizer
 }

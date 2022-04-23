@@ -6,6 +6,7 @@ import (
 
 	"github.com/iskorotkov/compiler/internal/context"
 	"github.com/iskorotkov/compiler/internal/data/ast"
+	"github.com/iskorotkov/compiler/internal/data/literal"
 	"github.com/iskorotkov/compiler/internal/data/symbol"
 	"github.com/iskorotkov/compiler/internal/data/token"
 	"github.com/iskorotkov/compiler/internal/module/typechecker"
@@ -47,6 +48,7 @@ func NewGenerator() *Generator {
 func (g *Generator) Generate(
 	ctx interface {
 		context.LoggerContext
+		context.ErrorsContext
 	},
 	input <-chan typechecker.Result,
 ) chan struct{} {
@@ -56,6 +58,12 @@ func (g *Generator) Generate(
 		defer close(ch)
 
 		for program := range input {
+			if len(ctx.Errors()) != 0 {
+				ctx.Logger().Infof("WASM generation skipped due to errors")
+				ctx.AddError(context.ErrorSourceCodegen, literal.Position{}, fmt.Errorf("WASM generation skipped due to errors"))
+				return
+			}
+
 			var globals []Global
 			for _, s := range program.Scope.Symbols() {
 				switch s := s.(type) {

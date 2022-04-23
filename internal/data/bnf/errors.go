@@ -18,10 +18,6 @@ func (e *UnexpectedTokenError) Error() string {
 }
 
 func (e *UnexpectedTokenError) Is(other error) bool {
-	switch other.(type) {
-	case *UnexpectedTokenError:
-		return true
-	default:
-		return false
-	}
+	_, ok := other.(*UnexpectedTokenError)
+	return ok
 }

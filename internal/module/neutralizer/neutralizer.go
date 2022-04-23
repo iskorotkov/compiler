@@ -1,17 +1,9 @@
-package syntax_neutralizer
+package neutralizer
 
 import (
-	"errors"
-	"fmt"
-
 	"github.com/agnivade/levenshtein"
 
 	"github.com/iskorotkov/compiler/internal/data/token"
-)
-
-var (
-	FixableError   = errors.New("fixable error")
-	UnfixableError = errors.New("unfixable error")
 )
 
 type Neutralizer struct {
@@ -32,23 +24,35 @@ func (n Neutralizer) Neutralize(expected token.ID, actual token.Token) (token.To
 
 	switch expected {
 	case token.Unknown, token.UserDefined, token.EOF, token.IntLiteral, token.DoubleLiteral, token.BoolLiteral:
-		return actual, fmt.Errorf("expecting %v, got %v: %w", expected, actual, UnfixableError)
+		return actual, &UnfixableError{
+			Expected: expected,
+			Actual:   actual,
+		}
 	default:
 		expectedTokenValue := token.ByID(expected)
 
 		// Avoid overwriting entire token value.
 		if len(expectedTokenValue) < 3 || len(expectedTokenValue) <= n.maxDistance {
-			return actual, fmt.Errorf("expected %v, got %v: %w", expected, actual, UnfixableError)
+			return actual, &UnfixableError{
+				Expected: expected,
+				Actual:   actual,
+			}
 		}
 
 		dist := levenshtein.ComputeDistance(expectedTokenValue, actual.Value)
 		if dist > n.maxDistance {
-			return actual, fmt.Errorf("expected %v, got %v: %w", expected, actual, UnfixableError)
+			return actual, &UnfixableError{
+				Expected: expected,
+				Actual:   actual,
+			}
 		}
 
 		actual.ID = expected
 		actual.Value = expectedTokenValue
 
-		return actual, fmt.Errorf("expected %v, got %v: %w", expected, actual, FixableError)
+		return actual, &FixableError{
+			Expected: expected,
+			Actual:   actual,
+		}
 	}
 }

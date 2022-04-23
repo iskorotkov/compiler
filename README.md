@@ -96,7 +96,7 @@ type ErrorsContext interface {
 }
 
 type NeutralizerContext interface {
-	Neutralizer() syntax_neutralizer.Neutralizer
+	Neutralizer() neutralizer.Neutralizer
 }
 ```
 

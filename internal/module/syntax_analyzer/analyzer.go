@@ -8,12 +8,12 @@ import (
 	"github.com/iskorotkov/compiler/internal/data/bnf"
 	"github.com/iskorotkov/compiler/internal/data/token"
 	"github.com/iskorotkov/compiler/internal/fn/channel"
-	"github.com/iskorotkov/compiler/internal/module/syntax_neutralizer"
+	"github.com/iskorotkov/compiler/internal/module/neutralizer"
 )
 
 type SyntaxAnalyzer struct {
 	buffer      int
-	neutralizer syntax_neutralizer.Neutralizer
+	neutralizer neutralizer.Neutralizer
 }
 
 func New(buffer int) *SyntaxAnalyzer {

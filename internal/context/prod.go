@@ -5,7 +5,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/iskorotkov/compiler/internal/module/syntax_neutralizer"
+	"github.com/iskorotkov/compiler/internal/module/neutralizer"
 )
 
 var _ FullContext = (*prodContext)(nil)
@@ -30,6 +30,6 @@ func NewProdContext(ctx context.Context) FullContext {
 		Context:            ctx,
 		logger:             zap.NewNop().Sugar(),
 		errorsContext:      errorsContext{},
-		neutralizerContext: neutralizerContext{neutralizer: syntax_neutralizer.New(1)},
+		neutralizerContext: neutralizerContext{neutralizer: neutralizer.New(1)},
 	}
 }
