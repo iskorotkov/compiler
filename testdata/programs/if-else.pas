@@ -4,7 +4,7 @@ var b: boolean;
 begin
   x := 0;
   if b then
-    x := 100
+    x := 100;
   else
-    x := 2
+    x := 2;
 end.

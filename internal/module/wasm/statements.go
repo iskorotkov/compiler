@@ -106,27 +106,29 @@ type If struct {
 func (i *If) StringIndent(level int) string {
 	var trueBodyStr string
 	for _, stmt := range i.TrueBody {
-		trueBodyStr += stmt.StringIndent(level+1) + "\n"
+		trueBodyStr += stmt.StringIndent(level+2) + "\n"
 	}
 
 	trueBodyStr = fmt.Sprintf(`
 %s(block
-%s)`, strings.Repeat("  ", level), trueBodyStr)
+%s%[1]s)`, strings.Repeat("  ", level+1), trueBodyStr)
 
-	if len(i.FalseBody) > 0 {
-		return fmt.Sprintf(`%s(if %s%s)`,
+	if len(i.FalseBody) == 0 {
+		return fmt.Sprintf(`%s(if %s%s
+%[1]s)`,
 			strings.Repeat("  ", level), i.Cond, trueBodyStr)
 	} else {
 		var falseBodyStr string
 		for _, stmt := range i.FalseBody {
-			falseBodyStr += stmt.StringIndent(level+1) + "\n"
+			falseBodyStr += stmt.StringIndent(level+2) + "\n"
 		}
 
-		falseBodyStr = fmt.Sprintf(`
-%s(block
-%s)`, strings.Repeat("  ", level), falseBodyStr)
+		falseBodyStr = fmt.Sprintf(`%s(block
+%s%[1]s)`, strings.Repeat("  ", level+1), falseBodyStr)
 
-		return fmt.Sprintf(`%s(if %s%s%s)`,
+		return fmt.Sprintf(`%s(if %s%s
+%s
+%[1]s)`,
 			strings.Repeat("  ", level), i.Cond, trueBodyStr, falseBodyStr)
 	}
 }
@@ -140,23 +142,21 @@ type Loop struct {
 func (l *Loop) StringIndent(level int) string {
 	var bodyStr string
 	for _, stmt := range l.Body {
-		bodyStr += stmt.StringIndent(level+1) + "\n"
+		bodyStr += stmt.StringIndent(level+2) + "\n"
 	}
 
 	if l.PreCond != nil {
 		return fmt.Sprintf(`%s(loop
   %[1]s(block
     %[1]s(br_if 0 %[2]s)
-    %[1]s%[2]s
-  %[2]s)
-)`, strings.Repeat("  ", level), l.PreCond.String(), bodyStr)
+%[3]s  %[1]s)
+%[1]s)`, strings.Repeat("  ", level), l.PreCond.String(), bodyStr)
 	} else {
 		return fmt.Sprintf(`%s(loop
   %[1]s(block
-    %[1]s%[3]s
-    %[1]s(br_if 0 %[2]s)
+%[3]s    %[1]s(br_if 0 %[2]s)
   %[1]s)
-)`, strings.Repeat("  ", level), l.PostCond.String(), bodyStr)
+%[1]s)`, strings.Repeat("  ", level), l.PostCond.String(), bodyStr)
 	}
 }
 

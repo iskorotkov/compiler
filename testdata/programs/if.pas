@@ -4,5 +4,5 @@ var b: boolean;
 begin
   x := 0;
   if b then
-    x := 100
+    x := 100;
 end.

@@ -1,5 +1,5 @@
 program p;
-var i, count: int;
+var i, count: integer;
 begin
   count := 0;
   while true do

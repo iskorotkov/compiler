@@ -49,6 +49,7 @@ const (
 	MarkerProgramBlock
 	MarkerDeclarations
 	MarkerOperators
+	MarkerBlock
 
 	// Common.
 

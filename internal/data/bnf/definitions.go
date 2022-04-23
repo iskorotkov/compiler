@@ -16,10 +16,10 @@ func init() {
 		Token{ID: token.If},
 		Sequence{BNFs: []BNF{&Expression}, Markers: ast.Markers{ast.MarkerIfExpr: true}},
 		Token{ID: token.Then},
-		&Operator,
+		&Block,
 		Optional{BNF: Sequence{BNFs: []BNF{
 			Token{ID: token.Else},
-			&Operator,
+			&Block,
 		}}},
 	}, Markers: ast.Markers{ast.MarkerIf: true}}
 }
@@ -227,7 +227,7 @@ func init() {
 
 	FunctionDefinition = Sequence{Name: "function-definition", BNFs: []BNF{
 		&FunctionHeader,
-		&Block,
+		&FunctionBlock,
 	}, Markers: ast.Markers{ast.MarkerFuncDecl: true}}
 
 	FunctionUsage = Sequence{Name: "function-usage", BNFs: []BNF{
@@ -260,16 +260,12 @@ func init() {
 		Token{ID: token.While},
 		Sequence{BNFs: []BNF{&Expression}, Markers: ast.Markers{ast.MarkerWhileExpr: true}},
 		Token{ID: token.Do},
-		&Operator,
+		&Block,
 	}, Markers: ast.Markers{ast.MarkerWhile: true}}
 
 	Repeat = Sequence{Name: "repeat", BNFs: []BNF{
 		Token{ID: token.Repeat},
-		&Operator,
-		Several{BNF: Sequence{BNFs: []BNF{
-			Token{ID: token.Semicolon},
-			&Operator,
-		}}},
+		&Block,
 		Token{ID: token.Until},
 		Sequence{BNFs: []BNF{&Expression}, Markers: ast.Markers{ast.MarkerRepeatExpr: true}},
 	}, Markers: ast.Markers{ast.MarkerRepeat: true}}
@@ -289,7 +285,7 @@ func init() {
 			&Expression,
 			Token{ID: token.Do},
 		}, Markers: ast.Markers{ast.MarkerForHeader: true}},
-		&Operator,
+		&Block,
 	}, Markers: ast.Markers{ast.MarkerFor: true}}
 }
 
@@ -297,6 +293,7 @@ func init() {
 
 var (
 	Operator           Optional
+	Block              Sequence
 	SimpleOperator     Either
 	CompositeOperator  Sequence
 	ComplexOperator    Either
@@ -310,6 +307,7 @@ func init() {
 	SimpleOperator = Either{Name: "simple-operator", BNFs: []BNF{&AssignmentOperator}}
 	ConditionOperator = Either{Name: "condition-operator", BNFs: []BNF{&If}}
 	Operators = Sequence{Name: "operators", BNFs: []BNF{&CompositeOperator}}
+	Block = Sequence{Name: "block", BNFs: []BNF{&Operator}, Markers: ast.Markers{ast.MarkerBlock: true}}
 
 	// TODO: Syntax analyzer is very sensitive to extra semicolons.
 	Operator = Optional{Name: "operator", BNF: Either{BNFs: []BNF{
@@ -417,12 +415,12 @@ func init() {
 // Special.
 
 var (
-	Block   Sequence
-	Program Sequence
+	FunctionBlock Sequence
+	Program       Sequence
 )
 
 func init() {
-	Block = Sequence{Name: "block", BNFs: []BNF{
+	FunctionBlock = Sequence{Name: "function-block", BNFs: []BNF{
 		Sequence{BNFs: []BNF{
 			&Constants,
 			&Types,
@@ -436,7 +434,7 @@ func init() {
 		Token{ID: token.Program},
 		Token{ID: token.UserDefined},
 		Token{ID: token.Semicolon},
-		Sequence{BNFs: []BNF{&Block}, Markers: ast.Markers{ast.MarkerProgramBlock: true}},
+		Sequence{BNFs: []BNF{&FunctionBlock}, Markers: ast.Markers{ast.MarkerProgramBlock: true}},
 		Token{ID: token.Period},
 		Token{ID: token.EOF},
 	}}

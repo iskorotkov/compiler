@@ -156,9 +156,59 @@ func (g *Generator) buildFuncBody(
 				Expr: wasmExpr,
 			})
 		case node.Has(ast.MarkerIf):
+			expr := node.
+				Query(ast.QueryTypeOne, ast.MarkerExpr)[0]
+
+			wasmExpr, err := g.buildExpression(scope, expr)
+			if err != nil {
+				ctx.Logger().Errorf("%v: %s", expr, err)
+				continue
+			}
+
+			operators := node.
+				Query(ast.QueryTypeTop, ast.MarkerBlock)
+
+			var falseBody []Statement
+			if len(operators) > 1 {
+				falseBody = g.buildFuncBody(ctx, scope, operators[1])
+			}
+
+			statements = append(statements, &If{
+				Cond:      wasmExpr,
+				TrueBody:  g.buildFuncBody(ctx, scope, operators[0]),
+				FalseBody: falseBody,
+			})
 		case node.Has(ast.MarkerFor):
+			// TODO: Add support for for loops.
+			panic("for loop is not supported yet")
 		case node.Has(ast.MarkerWhile):
+			expr := node.
+				Query(ast.QueryTypeOne, ast.MarkerExpr)[0]
+
+			wasmExpr, err := g.buildExpression(scope, expr)
+			if err != nil {
+				ctx.Logger().Errorf("%v: %s", expr, err)
+				continue
+			}
+
+			body := node.
+				Query(ast.QueryTypeOne, ast.MarkerBlock)[0]
+
+			statements = append(statements, &Loop{
+				PreCond: &BinaryOp{
+					Type: TypeI32,
+					Op:   OpEq,
+					Left: wasmExpr,
+					Right: &Const{
+						Type:  TypeI32,
+						Value: "0",
+					},
+				},
+				Body: g.buildFuncBody(ctx, scope, body),
+			})
 		case node.Has(ast.MarkerRepeat):
+			// TODO: Add support for repeat loops.
+			panic("repeat loop is not supported yet")
 		default:
 			panic("unknown node marker")
 		}
