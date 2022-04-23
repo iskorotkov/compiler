@@ -50,12 +50,16 @@ func compile(ctx context.FullContext, r io.Reader) {
 	generator := wasm.NewGenerator()
 	<-generator.Generate(ctx, results)
 
+	writeReport(ctx)
+}
+
+func writeReport(ctx context.FullContext) {
 	if len(ctx.Errors()) == 0 {
 		fmt.Println("compiled successfully")
 		return
 	}
 
-	fmt.Printf("type checking finished with %d errors\n", len(ctx.Errors()))
+	fmt.Printf("finished with %d error(s)\n", len(ctx.Errors()))
 	for _, err := range ctx.Errors() {
 		fmt.Println(err)
 	}

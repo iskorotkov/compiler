@@ -3,32 +3,33 @@ package context
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/iskorotkov/compiler/internal/data/literal"
 )
 
 const (
-	ErrorSourceReader ErrorSource = iota + 1
-	ErrorSourceScanner
-	ErrorSourceSyntax
-	ErrorSourceTypecheck
-	ErrorSourceCodegen
-	ErrorSourceInternal
+	ErrorSourceReader    ErrorSource = "reader"
+	ErrorSourceScanner   ErrorSource = "scanner"
+	ErrorSourceSyntax    ErrorSource = "syntax"
+	ErrorSourceTypecheck ErrorSource = "typecheck"
+	ErrorSourceCodegen   ErrorSource = "codegen"
+	ErrorSourceInternal  ErrorSource = "internal"
 )
 
-type ErrorSource int
+type ErrorSource string
 
 var _ ErrorsContext = (*errorsContext)(nil)
 
 type Error struct {
-	literal.Position
-	ErrorSource
-	error
+	Source   ErrorSource
+	Position literal.Position
+	Err      error
 }
 
 func (e Error) Error() string {
-	return fmt.Sprintf("%s: %s", e.Position, e.error)
+	return fmt.Sprintf("%s %s: %v", strings.ToUpper(string(e.Source)), e.Position, e.Err)
 }
 
 type errorsContext struct {
@@ -41,8 +42,9 @@ func (e *errorsContext) AddError(source ErrorSource, position literal.Position, 
 	defer e.m.Unlock()
 
 	e.errors = append(e.errors, Error{
+		Source:   source,
 		Position: position,
-		error:    err,
+		Err:      err,
 	})
 }
 

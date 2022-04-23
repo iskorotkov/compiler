@@ -33,7 +33,7 @@ func (s Several) Build(ctx interface {
 		if err != nil {
 			ch.Rollback()
 
-			if errors.Is(err, ErrUnexpectedToken) {
+			if errors.Is(err, &UnexpectedTokenError{}) {
 				ctx.Logger().Debugf("%v in %v, commit tx", err, s)
 				return ast.WrapSlice(items, s.Markers), nil
 			} else {

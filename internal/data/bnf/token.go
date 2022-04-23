@@ -2,7 +2,6 @@ package bnf
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/iskorotkov/compiler/internal/context"
 	"github.com/iskorotkov/compiler/internal/data/ast"
@@ -29,7 +28,10 @@ func (tk Token) Build(ctx interface {
 	if _, err := ctx.Neutralizer().Neutralize(tk.ID, t); err != nil {
 		if errors.Is(err, syntax_neutralizer.UnfixableError) {
 			ctx.Logger().Warnf("unfixable syntax error: %v", err)
-			return nil, fmt.Errorf("%v: expected %q, got %q: %w", t.Literal, tk, t.ID, ErrUnexpectedToken)
+			return nil, &UnexpectedTokenError{
+				Expected: tk.ID,
+				Actual:   t,
+			}
 		}
 
 		ctx.Logger().Infof("fixed syntax error: %v", err)

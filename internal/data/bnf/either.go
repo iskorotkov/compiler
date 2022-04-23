@@ -33,7 +33,7 @@ func (e Either) Build(ctx interface {
 		if err != nil {
 			ch.Rollback()
 
-			if errors.Is(err, ErrUnexpectedToken) {
+			if errors.Is(err, &UnexpectedTokenError{}) {
 				lastError = err
 				ctx.Logger().Debugf("%v in %v, skipping", err, e)
 				continue

@@ -1,6 +1,8 @@
 package syntax_analyzer
 
 import (
+	"errors"
+
 	"github.com/iskorotkov/compiler/internal/context"
 	"github.com/iskorotkov/compiler/internal/data/ast"
 	"github.com/iskorotkov/compiler/internal/data/bnf"
@@ -34,11 +36,16 @@ func (a SyntaxAnalyzer) Analyze(
 		defer close(ch)
 
 		ctx.Logger().Infof("syntax analysis started")
-		res, err := bnf.Program.Build(ctx, channel.NewTxChannel(input))
 
+		res, err := bnf.Program.Build(ctx, channel.NewTxChannel(input))
 		if err != nil {
 			ctx.Logger().Errorf("error during syntax analysis: %v", err)
-			ctx.AddError(context.ErrorSourceSyntax, res.Position(), err)
+
+			var unexpectedTokenError *bnf.UnexpectedTokenError
+			if errors.As(err, &unexpectedTokenError) {
+				ctx.AddError(context.ErrorSourceSyntax, unexpectedTokenError.Actual.Position, err)
+			}
+
 			return
 		}
 

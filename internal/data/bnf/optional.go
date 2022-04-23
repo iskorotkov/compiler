@@ -31,7 +31,7 @@ func (o Optional) Build(ctx interface {
 	if err != nil {
 		ch.Rollback()
 
-		if errors.Is(err, ErrUnexpectedToken) {
+		if errors.Is(err, &UnexpectedTokenError{}) {
 			ctx.Logger().Debugf("%v in %v, rollback tx", err, o)
 			return nil, nil
 		} else {
