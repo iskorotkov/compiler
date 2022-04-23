@@ -1,1 +1,1 @@
-ok: list of 6 items
+list of 6 items

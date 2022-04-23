@@ -8,7 +8,6 @@ import (
 	"github.com/iskorotkov/compiler/internal/data/ast"
 	"github.com/iskorotkov/compiler/internal/data/token"
 	"github.com/iskorotkov/compiler/internal/fn/channel"
-	"github.com/iskorotkov/compiler/internal/fn/option"
 )
 
 var _ BNF = Several{}
@@ -22,7 +21,7 @@ type Several struct {
 func (s Several) Build(ctx interface {
 	context.LoggerContext
 	context.NeutralizerContext
-}, ch *channel.TxChannel[option.Option[token.Token]]) (ast.Node, error) {
+}, ch *channel.TxChannel[token.Token]) (ast.Node, error) {
 	ctx, cancel := context.Scoped(ctx, s.Name)
 	defer cancel()
 

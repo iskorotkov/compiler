@@ -7,7 +7,6 @@ import (
 	"github.com/iskorotkov/compiler/internal/data/ast"
 	"github.com/iskorotkov/compiler/internal/data/symbol"
 	"github.com/iskorotkov/compiler/internal/data/token"
-	"github.com/iskorotkov/compiler/internal/fn/option"
 )
 
 type Result struct {
@@ -36,22 +35,16 @@ func (c TypeChecker) Check(
 		context.ErrorsContext
 		context.NeutralizerContext
 	},
-	input <-chan option.Option[ast.Node],
-) <-chan option.Option[Result] {
-	ch := make(chan option.Option[Result], c.buffer)
+	input <-chan ast.Node,
+) <-chan Result {
+	ch := make(chan Result, c.buffer)
 
 	go func() {
 		defer close(ch)
 
 		ctx.Logger().Infof("type checking started")
 
-		for opt := range input {
-			program, err := opt.Unwrap()
-			if err != nil {
-				ctx.Logger().Error(err)
-				continue
-			}
-
+		for program := range input {
 			block := program.Query(ast.QueryTypeOne, ast.MarkerProgramBlock)[0]
 
 			scope := symbol.NewScope()
@@ -59,10 +52,10 @@ func (c TypeChecker) Check(
 			c.checkBlock(ctx, scope, block)
 
 			if len(ctx.Errors()) == 0 {
-				ch <- option.Ok(Result{
+				ch <- Result{
 					Node:  program,
 					Scope: scope,
-				})
+				}
 			}
 		}
 
@@ -111,7 +104,7 @@ func (c TypeChecker) checkFunctionCalls(
 
 		sym, ok := scope.Lookup(&symbol.Name{Name: name.Value})
 		if !ok {
-			ctx.AddError(name.Position(), fmt.Errorf("unknown function %s", name.Value))
+			ctx.AddError(context.ErrorSourceTypecheck, name.Position(), fmt.Errorf("unknown function %s", name.Value))
 			continue
 		}
 
@@ -121,19 +114,19 @@ func (c TypeChecker) checkFunctionCalls(
 			continue
 		case *symbol.Func:
 			if len(args) != len(sym.Params) {
-				ctx.AddError(name.Position(), fmt.Errorf("wrong number of arguments for function %s", name.Value))
+				ctx.AddError(context.ErrorSourceTypecheck, name.Position(), fmt.Errorf("wrong number of arguments for function %s", name.Value))
 				continue
 			}
 
 			for i, arg := range args {
 				argType, err := c.resolver.Resolve(ctx, scope, arg)
 				if err != nil {
-					ctx.AddError(arg.Position(), err)
+					ctx.AddError(context.ErrorSourceTypecheck, arg.Position(), err)
 					continue
 				}
 
 				if _, ok := c.converter.IsAssignable(argType, sym.Params[i].Type.BuiltinType); ok {
-					ctx.AddError(arg.Position(), fmt.Errorf("wrong type of argument %d for function %s", i, name.Value))
+					ctx.AddError(context.ErrorSourceTypecheck, arg.Position(), fmt.Errorf("wrong type of argument %d for function %s", i, name.Value))
 					continue
 				}
 			}
@@ -159,18 +152,18 @@ func (c TypeChecker) checkFlowOperators(
 
 		fromType, err := c.resolver.Resolve(ctx, scope, fromExpr)
 		if err != nil {
-			ctx.AddError(fromExpr.Position(), err)
+			ctx.AddError(context.ErrorSourceTypecheck, fromExpr.Position(), err)
 			continue
 		}
 
 		toType, err := c.resolver.Resolve(ctx, scope, toExpr)
 		if err != nil {
-			ctx.AddError(toExpr.Position(), err)
+			ctx.AddError(context.ErrorSourceTypecheck, toExpr.Position(), err)
 			continue
 		}
 
 		if fromType != symbol.BuiltinTypeInt || toType != symbol.BuiltinTypeInt {
-			ctx.AddError(fromExpr.Position().Join(toExpr.Position()), fmt.Errorf("range in for loop must have int type"))
+			ctx.AddError(context.ErrorSourceTypecheck, fromExpr.Position().Join(toExpr.Position()), fmt.Errorf("range in for loop must have int type"))
 			continue
 		}
 	}
@@ -183,12 +176,12 @@ func (c TypeChecker) checkFlowOperators(
 	for _, condition := range conditions {
 		conditionType, err := c.resolver.Resolve(ctx, scope, condition)
 		if err != nil {
-			ctx.AddError(condition.Position(), err)
+			ctx.AddError(context.ErrorSourceTypecheck, condition.Position(), err)
 			continue
 		}
 
 		if conditionType != symbol.BuiltinTypeBool {
-			ctx.AddError(condition.Position(), fmt.Errorf("condition in if/while/repeat statement must have bool type"))
+			ctx.AddError(context.ErrorSourceTypecheck, condition.Position(), fmt.Errorf("condition in if/while/repeat statement must have bool type"))
 			continue
 		}
 	}
@@ -209,12 +202,12 @@ func (c TypeChecker) checkAssignments(
 
 		vSymbol, ok := scope.Lookup(&symbol.Name{Name: v.Value})
 		if !ok {
-			ctx.AddError(v.Position(), fmt.Errorf("undeclared variable: %s", v.Value))
+			ctx.AddError(context.ErrorSourceTypecheck, v.Position(), fmt.Errorf("undeclared variable: %s", v.Value))
 			continue
 		}
 
 		if _, ok := vSymbol.(*symbol.Var); !ok {
-			ctx.AddError(v.Position(), fmt.Errorf("symbol is not a variable: %s", v.Value))
+			ctx.AddError(context.ErrorSourceTypecheck, v.Position(), fmt.Errorf("symbol is not a variable: %s", v.Value))
 			continue
 		}
 
@@ -222,12 +215,12 @@ func (c TypeChecker) checkAssignments(
 
 		exprType, err := c.resolver.Resolve(ctx, scope, expr[0])
 		if err != nil {
-			ctx.AddError(a.Position(), err)
+			ctx.AddError(context.ErrorSourceTypecheck, a.Position(), err)
 			continue
 		}
 
 		if _, ok := c.converter.IsAssignable(exprType, vSymbol.(*symbol.Var).Type.BuiltinType); !ok {
-			ctx.AddError(a.Position(), fmt.Errorf("type mismatch: %s", vSymbol.(*symbol.Var).Type.BuiltinType))
+			ctx.AddError(context.ErrorSourceTypecheck, a.Position(), fmt.Errorf("type mismatch: %s", vSymbol.(*symbol.Var).Type.BuiltinType))
 			continue
 		}
 	}
@@ -248,12 +241,12 @@ func (c TypeChecker) addFuncDecls(
 
 		returnTypeSymbol, ok := scope.Lookup(&symbol.Name{Name: returnType.Value})
 		if !ok {
-			ctx.AddError(returnType.Position(), fmt.Errorf("type %s not found", returnType.Value))
+			ctx.AddError(context.ErrorSourceTypecheck, returnType.Position(), fmt.Errorf("type %s not found", returnType.Value))
 			continue
 		}
 
 		if _, ok := returnTypeSymbol.(*symbol.Type); !ok {
-			ctx.AddError(returnType.Position(), fmt.Errorf("symbol %s is not a type", returnType.Value))
+			ctx.AddError(context.ErrorSourceTypecheck, returnType.Position(), fmt.Errorf("symbol %s is not a type", returnType.Value))
 			continue
 		}
 
@@ -263,12 +256,12 @@ func (c TypeChecker) addFuncDecls(
 			paramType := param.Query(ast.QueryTypeOne, ast.MarkerType)[0].(*ast.Leaf)
 			paramTypeSymbol, ok := scope.Lookup(&symbol.Name{Name: paramType.Value})
 			if !ok {
-				ctx.AddError(paramType.Position(), fmt.Errorf("type %s not found", paramType.Value))
+				ctx.AddError(context.ErrorSourceTypecheck, paramType.Position(), fmt.Errorf("type %s not found", paramType.Value))
 				continue
 			}
 
 			if _, ok := paramTypeSymbol.(*symbol.Type); !ok {
-				ctx.AddError(paramType.Position(), fmt.Errorf("symbol %s is not a type", paramType.Value))
+				ctx.AddError(context.ErrorSourceTypecheck, paramType.Position(), fmt.Errorf("symbol %s is not a type", paramType.Value))
 				continue
 			}
 
@@ -286,7 +279,7 @@ func (c TypeChecker) addFuncDecls(
 		}
 
 		if err := scope.Add(functionSymbol); err != nil {
-			ctx.AddError(name.Position(), err)
+			ctx.AddError(context.ErrorSourceTypecheck, name.Position(), err)
 			continue
 		}
 
@@ -323,12 +316,12 @@ func (c TypeChecker) addTypeDecls(
 
 		typeNameSymbol, ok := scope.Lookup(&symbol.Name{Name: typeName.Value})
 		if !ok {
-			ctx.AddError(typeName.Position(), fmt.Errorf("type %s not found", typeName.Value))
+			ctx.AddError(context.ErrorSourceTypecheck, typeName.Position(), fmt.Errorf("type %s not found", typeName.Value))
 			continue
 		}
 
 		if _, ok := typeNameSymbol.(*symbol.Type); !ok {
-			ctx.AddError(typeName.Position(), fmt.Errorf("symbol %s is not a type", typeName.Value))
+			ctx.AddError(context.ErrorSourceTypecheck, typeName.Position(), fmt.Errorf("symbol %s is not a type", typeName.Value))
 			continue
 		}
 
@@ -337,7 +330,7 @@ func (c TypeChecker) addTypeDecls(
 			Alias:       typeNameSymbol.(*symbol.Type),
 			BuiltinType: typeNameSymbol.(*symbol.Type).BuiltinType,
 		}); err != nil {
-			ctx.AddError(name.Position(), err)
+			ctx.AddError(context.ErrorSourceTypecheck, name.Position(), err)
 			continue
 		}
 	}
@@ -365,18 +358,18 @@ func (c TypeChecker) addConstDecls(
 		case token.BoolLiteral:
 			typeName = "boolean"
 		default:
-			ctx.AddError(valueNode.Position(), fmt.Errorf("unsupported constant type %s", valueNode.ID))
+			ctx.AddError(context.ErrorSourceTypecheck, valueNode.Position(), fmt.Errorf("unsupported constant type %s", valueNode.ID))
 			continue
 		}
 
 		typeSymbol, ok := scope.Lookup(&symbol.Name{Name: typeName})
 		if !ok {
-			ctx.AddError(valueNode.Position(), fmt.Errorf("type %s not found", typeName))
+			ctx.AddError(context.ErrorSourceTypecheck, valueNode.Position(), fmt.Errorf("type %s not found", typeName))
 			continue
 		}
 
 		if _, ok := typeSymbol.(*symbol.Type); !ok {
-			ctx.AddError(valueNode.Position(), fmt.Errorf("symbol %s is not a type", typeName))
+			ctx.AddError(context.ErrorSourceTypecheck, valueNode.Position(), fmt.Errorf("symbol %s is not a type", typeName))
 			continue
 		}
 
@@ -385,7 +378,7 @@ func (c TypeChecker) addConstDecls(
 			Type:     *typeSymbol.(*symbol.Type),
 			RawValue: valueNode.Value,
 		}); err != nil {
-			ctx.AddError(name.Position(), err)
+			ctx.AddError(context.ErrorSourceTypecheck, name.Position(), err)
 			continue
 		}
 	}
@@ -404,12 +397,12 @@ func (c TypeChecker) addVarDecls(
 		typeName := decl.Query(ast.QueryTypeOne, ast.MarkerType)[0].(*ast.Leaf)
 		typeNameSymbol, ok := scope.Lookup(&symbol.Name{Name: typeName.Value})
 		if !ok {
-			ctx.AddError(typeName.Position(), fmt.Errorf("type %s not found", typeName.Value))
+			ctx.AddError(context.ErrorSourceTypecheck, typeName.Position(), fmt.Errorf("type %s not found", typeName.Value))
 			continue
 		}
 
 		if _, ok := typeNameSymbol.(*symbol.Type); !ok {
-			ctx.AddError(typeName.Position(), fmt.Errorf("symbol %s is not a type", typeName.Value))
+			ctx.AddError(context.ErrorSourceTypecheck, typeName.Position(), fmt.Errorf("symbol %s is not a type", typeName.Value))
 			continue
 		}
 
@@ -420,7 +413,7 @@ func (c TypeChecker) addVarDecls(
 				Token: name.Token,
 				Type:  *typeNameSymbol.(*symbol.Type),
 			}); err != nil {
-				ctx.AddError(name.Position(), err)
+				ctx.AddError(context.ErrorSourceTypecheck, name.Position(), err)
 				continue
 			}
 		}

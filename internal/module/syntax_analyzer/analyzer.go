@@ -6,7 +6,6 @@ import (
 	"github.com/iskorotkov/compiler/internal/data/bnf"
 	"github.com/iskorotkov/compiler/internal/data/token"
 	"github.com/iskorotkov/compiler/internal/fn/channel"
-	"github.com/iskorotkov/compiler/internal/fn/option"
 	"github.com/iskorotkov/compiler/internal/module/syntax_neutralizer"
 )
 
@@ -25,26 +24,26 @@ func (a SyntaxAnalyzer) Analyze(
 	ctx interface {
 		context.LoggerContext
 		context.NeutralizerContext
+		context.ErrorsContext
 	},
-	input <-chan option.Option[token.Token],
-) <-chan option.Option[ast.Node] {
-	ch := make(chan option.Option[ast.Node], a.buffer)
+	input <-chan token.Token,
+) <-chan ast.Node {
+	ch := make(chan ast.Node, a.buffer)
 
 	go func() {
 		defer close(ch)
 
 		ctx.Logger().Infof("syntax analysis started")
-
 		res, err := bnf.Program.Build(ctx, channel.NewTxChannel(input))
 
 		if err != nil {
 			ctx.Logger().Errorf("error during syntax analysis: %v", err)
-			ch <- option.Err[ast.Node](err)
+			ctx.AddError(context.ErrorSourceSyntax, res.Position(), err)
 			return
 		}
 
 		ctx.Logger().Infof("syntax analysis succeeded")
-		ch <- option.Ok[ast.Node](res)
+		ch <- res
 	}()
 
 	return ch

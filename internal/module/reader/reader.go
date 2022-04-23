@@ -6,8 +6,8 @@ import (
 	"io"
 	"regexp"
 
+	"github.com/iskorotkov/compiler/internal/context"
 	"github.com/iskorotkov/compiler/internal/data/literal"
-	"github.com/iskorotkov/compiler/internal/fn/option"
 )
 
 var (
@@ -32,8 +32,13 @@ func New(buffer int) *Reader {
 	}
 }
 
-func (s Reader) Read(ctx interface{}, r io.Reader) <-chan option.Option[literal.Literal] {
-	ch := make(chan option.Option[literal.Literal], s.buffer)
+func (s Reader) Read(
+	ctx interface {
+		context.ErrorsContext
+	},
+	r io.Reader,
+) <-chan literal.Literal {
+	ch := make(chan literal.Literal, s.buffer)
 
 	go func() {
 		defer close(ch)
@@ -45,12 +50,12 @@ func (s Reader) Read(ctx interface{}, r io.Reader) <-chan option.Option[literal.
 				break
 			}
 			if err := scanner.Err(); err != nil {
-				ch <- option.Err[literal.Literal](err)
+				ctx.AddError(context.ErrorSourceReader, literal.Position{Line: lineNumber}, err)
 				return
 			}
 
 			line := scanner.Text()
-			s.splitLine(ctx, line, lineNumber, ch)
+			s.splitLine(line, lineNumber, ch)
 
 			lineNumber++
 		}
@@ -59,8 +64,7 @@ func (s Reader) Read(ctx interface{}, r io.Reader) <-chan option.Option[literal.
 	return ch
 }
 
-//goland:noinspection GoUnusedParameter
-func (s Reader) splitLine(ctx interface{}, input string, lineNumber literal.LineNumber, ch chan<- option.Option[literal.Literal]) {
+func (s Reader) splitLine(input string, lineNumber literal.LineNumber, ch chan<- literal.Literal) {
 	inputLength := literal.ColNumber(len(input))
 	offset := literal.ColNumber(0)
 	rest := input
@@ -70,7 +74,7 @@ func (s Reader) splitLine(ctx interface{}, input string, lineNumber literal.Line
 		if boundary == nil {
 			if len(rest) > 0 {
 				// Add the rest of the line.
-				ch <- option.Ok(literal.New(rest, lineNumber, offset+1, inputLength+1))
+				ch <- literal.New(rest, lineNumber, offset+1, inputLength+1)
 			}
 
 			break
@@ -93,16 +97,16 @@ func (s Reader) splitLine(ctx interface{}, input string, lineNumber literal.Line
 
 		if boundaryStart > 0 {
 			// Add discovered literal.
-			ch <- option.Ok(literal.New(rest[:boundaryStart], lineNumber, offset+1, offset+boundaryStart+1))
+			ch <- literal.New(rest[:boundaryStart], lineNumber, offset+1, offset+boundaryStart+1)
 		}
 
 		// Add discovered boundary between two literals or other boundaries.
-		ch <- option.Ok(literal.New(rest[boundaryStart:boundaryEnd], lineNumber, offset+boundaryStart+1, offset+boundaryEnd+1))
+		ch <- literal.New(rest[boundaryStart:boundaryEnd], lineNumber, offset+boundaryStart+1, offset+boundaryEnd+1)
 
 		offset += boundaryEnd
 		rest = rest[boundaryEnd:]
 	}
 
 	// Add newline.
-	ch <- option.Ok(literal.New("\n", lineNumber, inputLength+1, inputLength+2))
+	ch <- literal.New("\n", lineNumber, inputLength+1, inputLength+2)
 }

@@ -8,10 +8,22 @@ import (
 	"github.com/iskorotkov/compiler/internal/data/literal"
 )
 
+const (
+	ErrorSourceReader ErrorSource = iota + 1
+	ErrorSourceScanner
+	ErrorSourceSyntax
+	ErrorSourceTypecheck
+	ErrorSourceCodegen
+	ErrorSourceInternal
+)
+
+type ErrorSource int
+
 var _ ErrorsContext = (*errorsContext)(nil)
 
 type Error struct {
 	literal.Position
+	ErrorSource
 	error
 }
 
@@ -24,7 +36,7 @@ type errorsContext struct {
 	m      sync.Mutex
 }
 
-func (e *errorsContext) AddError(position literal.Position, err error) {
+func (e *errorsContext) AddError(source ErrorSource, position literal.Position, err error) {
 	e.m.Lock()
 	defer e.m.Unlock()
 

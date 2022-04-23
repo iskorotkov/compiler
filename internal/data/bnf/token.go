@@ -8,7 +8,6 @@ import (
 	"github.com/iskorotkov/compiler/internal/data/ast"
 	"github.com/iskorotkov/compiler/internal/data/token"
 	"github.com/iskorotkov/compiler/internal/fn/channel"
-	"github.com/iskorotkov/compiler/internal/fn/option"
 	"github.com/iskorotkov/compiler/internal/module/syntax_neutralizer"
 )
 
@@ -22,17 +21,12 @@ type Token struct {
 func (tk Token) Build(ctx interface {
 	context.LoggerContext
 	context.NeutralizerContext
-}, ch *channel.TxChannel[option.Option[token.Token]]) (ast.Node, error) {
+}, ch *channel.TxChannel[token.Token]) (ast.Node, error) {
 	ctx, cancel := context.Scoped(ctx, tk.String())
 	defer cancel()
 
-	t, err := ch.Read().Unwrap()
-	if err != nil {
-		ctx.Logger().Warnf("error %v, returning", err)
-		return nil, fmt.Errorf("token error: %v", err)
-	}
-
-	if _, err = ctx.Neutralizer().Neutralize(tk.ID, t); err != nil {
+	t := ch.Read()
+	if _, err := ctx.Neutralizer().Neutralize(tk.ID, t); err != nil {
 		if errors.Is(err, syntax_neutralizer.UnfixableError) {
 			ctx.Logger().Warnf("unfixable syntax error: %v", err)
 			return nil, fmt.Errorf("%v: expected %q, got %q: %w", t.Literal, tk, t.ID, ErrUnexpectedToken)

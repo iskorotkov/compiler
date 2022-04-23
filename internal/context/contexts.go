@@ -22,7 +22,7 @@ type LoggerContext interface {
 }
 
 type ErrorsContext interface {
-	AddError(position literal.Position, err error)
+	AddError(source ErrorSource, position literal.Position, err error)
 	Errors() []Error
 }
 

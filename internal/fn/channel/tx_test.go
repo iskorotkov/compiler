@@ -123,10 +123,8 @@ func TestNestedTransactions(t *testing.T) {
 	assert.False(t, ch.Open())
 
 	ch.Commit()
-	ch.Rollback()
 	assert.False(t, ch.Open())
 
 	ch.Commit()
-	ch.Rollback()
 	assert.False(t, ch.Open())
 }

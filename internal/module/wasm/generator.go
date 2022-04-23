@@ -8,7 +8,6 @@ import (
 	"github.com/iskorotkov/compiler/internal/data/ast"
 	"github.com/iskorotkov/compiler/internal/data/symbol"
 	"github.com/iskorotkov/compiler/internal/data/token"
-	"github.com/iskorotkov/compiler/internal/fn/option"
 	"github.com/iskorotkov/compiler/internal/module/typechecker"
 )
 
@@ -49,20 +48,14 @@ func (g *Generator) Generate(
 	ctx interface {
 		context.LoggerContext
 	},
-	input <-chan option.Option[typechecker.Result],
-) chan option.Option[interface{}] {
-	ch := make(chan option.Option[interface{}])
+	input <-chan typechecker.Result,
+) chan struct{} {
+	ch := make(chan struct{})
 
 	go func() {
 		defer close(ch)
 
-		for opt := range input {
-			program, err := opt.Unwrap()
-			if err != nil {
-				ch <- option.Err[interface{}](err)
-				return
-			}
-
+		for program := range input {
 			var globals []Global
 			for _, s := range program.Scope.Symbols() {
 				switch s := s.(type) {
