@@ -103,9 +103,9 @@ func (c TypeChecker) checkFunctionCalls(
 	for _, call := range calls {
 		name := call.Query(ast.QueryTypeOne, ast.MarkerFuncName)[0].(*ast.Leaf)
 
-		sym, ok := scope.Lookup(&symbol.Name{Name: name.Value})
-		if !ok {
-			ctx.AddError(context.ErrorSourceTypecheck, name.Position(), fmt.Errorf("unknown function %s", name.Value))
+		sym, err := ctx.Neutralizer().NeutralizeUserDefined(scope, name.Value)
+		if err != nil {
+			ctx.AddError(context.ErrorSourceTypecheck, name.Position(), err)
 			continue
 		}
 
@@ -201,9 +201,9 @@ func (c TypeChecker) checkAssignments(
 	for _, a := range assignments {
 		v := a.Query(ast.QueryTypeOne, ast.MarkerLeftSide)[0].(*ast.Leaf)
 
-		vSymbol, ok := scope.Lookup(&symbol.Name{Name: v.Value})
-		if !ok {
-			ctx.AddError(context.ErrorSourceTypecheck, v.Position(), fmt.Errorf("undeclared variable: %s", v.Value))
+		vSymbol, err := ctx.Neutralizer().NeutralizeUserDefined(scope, v.Value)
+		if err != nil {
+			ctx.AddError(context.ErrorSourceTypecheck, v.Position(), err)
 			continue
 		}
 
@@ -240,9 +240,9 @@ func (c TypeChecker) addFuncDecls(
 		name := decl.Query(ast.QueryTypeOne, ast.MarkerFuncName)[0].(*ast.Leaf)
 		returnType := decl.Query(ast.QueryTypeOne, ast.MarkerReturnType)[0].Query(ast.QueryTypeOne, ast.MarkerType)[0].(*ast.Leaf)
 
-		returnTypeSymbol, ok := scope.Lookup(&symbol.Name{Name: returnType.Value})
-		if !ok {
-			ctx.AddError(context.ErrorSourceTypecheck, returnType.Position(), fmt.Errorf("type %s not found", returnType.Value))
+		returnTypeSymbol, err := ctx.Neutralizer().NeutralizeUserDefined(scope, returnType.Value)
+		if err != nil {
+			ctx.AddError(context.ErrorSourceTypecheck, returnType.Position(), err)
 			continue
 		}
 
@@ -255,9 +255,10 @@ func (c TypeChecker) addFuncDecls(
 		for _, param := range decl.Query(ast.QueryTypeTop, ast.MarkerParamGroupDecl) {
 			paramName := param.Query(ast.QueryTypeOne, ast.MarkerName)[0].(*ast.Leaf)
 			paramType := param.Query(ast.QueryTypeOne, ast.MarkerType)[0].(*ast.Leaf)
-			paramTypeSymbol, ok := scope.Lookup(&symbol.Name{Name: paramType.Value})
-			if !ok {
-				ctx.AddError(context.ErrorSourceTypecheck, paramType.Position(), fmt.Errorf("type %s not found", paramType.Value))
+
+			paramTypeSymbol, err := ctx.Neutralizer().NeutralizeUserDefined(scope, paramType.Value)
+			if err != nil {
+				ctx.AddError(context.ErrorSourceTypecheck, paramType.Position(), err)
 				continue
 			}
 
@@ -315,9 +316,9 @@ func (c TypeChecker) addTypeDecls(
 		name := decl.Query(ast.QueryTypeOne, ast.MarkerName)[0].(*ast.Leaf)
 		typeName := decl.Query(ast.QueryTypeOne, ast.MarkerType)[0].(*ast.Leaf)
 
-		typeNameSymbol, ok := scope.Lookup(&symbol.Name{Name: typeName.Value})
-		if !ok {
-			ctx.AddError(context.ErrorSourceTypecheck, typeName.Position(), fmt.Errorf("type %s not found", typeName.Value))
+		typeNameSymbol, err := ctx.Neutralizer().NeutralizeUserDefined(scope, typeName.Value)
+		if err != nil {
+			ctx.AddError(context.ErrorSourceTypecheck, typeName.Position(), err)
 			continue
 		}
 
@@ -363,9 +364,9 @@ func (c TypeChecker) addConstDecls(
 			continue
 		}
 
-		typeSymbol, ok := scope.Lookup(&symbol.Name{Name: typeName})
-		if !ok {
-			ctx.AddError(context.ErrorSourceTypecheck, valueNode.Position(), fmt.Errorf("type %s not found", typeName))
+		typeSymbol, err := ctx.Neutralizer().NeutralizeUserDefined(scope, typeName)
+		if err != nil {
+			ctx.AddError(context.ErrorSourceTypecheck, valueNode.Position(), err)
 			continue
 		}
 
@@ -396,9 +397,10 @@ func (c TypeChecker) addVarDecls(
 ) {
 	for _, decl := range program.Query(ast.QueryTypeTop, ast.MarkerVarDecl) {
 		typeName := decl.Query(ast.QueryTypeOne, ast.MarkerType)[0].(*ast.Leaf)
-		typeNameSymbol, ok := scope.Lookup(&symbol.Name{Name: typeName.Value})
-		if !ok {
-			ctx.AddError(context.ErrorSourceTypecheck, typeName.Position(), fmt.Errorf("type %s not found", typeName.Value))
+
+		typeNameSymbol, err := ctx.Neutralizer().NeutralizeUserDefined(scope, typeName.Value)
+		if err != nil {
+			ctx.AddError(context.ErrorSourceTypecheck, typeName.Position(), err)
 			continue
 		}
 

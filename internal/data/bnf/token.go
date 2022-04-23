@@ -27,9 +27,9 @@ func (tk Token) Build(ctx interface {
 
 	actualToken := ch.Read()
 
-	fixedToken, err := ctx.Neutralizer().Neutralize(tk.ID, actualToken)
+	fixedToken, err := ctx.Neutralizer().NeutralizeKeyword(tk.ID, actualToken)
 	if err != nil {
-		if errors.Is(err, &neutralizer.UnfixableError{}) {
+		if errors.Is(err, &neutralizer.UnfixableKeywordError{}) {
 			ctx.Logger().Warnf("unfixable syntax error: %v", err)
 			return nil, &UnexpectedTokenError{
 				Expected: tk.ID,

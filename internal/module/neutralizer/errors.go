@@ -7,34 +7,34 @@ import (
 )
 
 var (
-	_ error = (*FixableError)(nil)
-	_ error = (*UnfixableError)(nil)
+	_ error = (*FixableKeywordError)(nil)
+	_ error = (*UnfixableKeywordError)(nil)
 )
 
-type FixableError struct {
+type FixableKeywordError struct {
 	Expected token.ID
 	Actual   token.Token
 }
 
-func (e *FixableError) Error() string {
-	return fmt.Sprintf("replaced %v with %v", e.Actual, e.Expected)
+func (e *FixableKeywordError) Error() string {
+	return fmt.Sprintf("replace %v with %v", e.Actual.Value, e.Expected)
 }
 
-func (e *FixableError) Is(other error) bool {
-	_, ok := other.(*FixableError)
+func (e *FixableKeywordError) Is(other error) bool {
+	_, ok := other.(*FixableKeywordError)
 	return ok
 }
 
-type UnfixableError struct {
+type UnfixableKeywordError struct {
 	Expected token.ID
 	Actual   token.Token
 }
 
-func (e *UnfixableError) Error() string {
+func (e *UnfixableKeywordError) Error() string {
 	return fmt.Sprintf("unfixable syntax error: expected %v, got %v", e.Expected, e.Actual)
 }
 
-func (e *UnfixableError) Is(other error) bool {
-	_, ok := other.(*UnfixableError)
+func (e *UnfixableKeywordError) Is(other error) bool {
+	_, ok := other.(*UnfixableKeywordError)
 	return ok
 }

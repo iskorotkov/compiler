@@ -53,6 +53,8 @@ func NewTypeResolver(converter TypeConverter) TypeResolver {
 func (r TypeResolver) Resolve(
 	ctx interface {
 		context.LoggerContext
+		context.ErrorsContext
+		context.NeutralizerContext
 	},
 	scope symbol.Scope,
 	expr ast.Node,
@@ -64,6 +66,8 @@ func (r TypeResolver) Resolve(
 func (r TypeResolver) resolveLinearExpr(
 	ctx interface {
 		context.LoggerContext
+		context.ErrorsContext
+		context.NeutralizerContext
 	},
 	scope symbol.Scope,
 	leafs []*ast.Leaf,
@@ -71,7 +75,7 @@ func (r TypeResolver) resolveLinearExpr(
 	for _, group := range opGroups {
 		for i, leaf := range leafs {
 			if leaf.ID == token.Not {
-				t, err := getLeafType(scope, leafs[i+1])
+				t, err := getLeafType(ctx, scope, leafs[i+1])
 				if err != nil {
 					return symbol.BuiltinTypeUnknown, err
 				}
@@ -126,13 +130,19 @@ func (r TypeResolver) resolveLinearExpr(
 		}
 	}
 
-	return r.subExpressionType(scope, valuesOnly)
+	return r.subExpressionType(ctx, scope, valuesOnly)
 }
 
-func (r TypeResolver) subExpressionType(scope symbol.Scope, linearized []*ast.Leaf) (symbol.BuiltinType, error) {
+func (r TypeResolver) subExpressionType(ctx interface {
+	context.ErrorsContext
+	context.NeutralizerContext
+},
+	scope symbol.Scope,
+	linearized []*ast.Leaf,
+) (symbol.BuiltinType, error) {
 	currentType := symbol.BuiltinTypeUnknown
 	for _, leaf := range linearized {
-		leafType, err := getLeafType(scope, leaf)
+		leafType, err := getLeafType(ctx, scope, leaf)
 		if err != nil {
 			return symbol.BuiltinTypeUnknown, err
 		}
@@ -148,7 +158,14 @@ func (r TypeResolver) subExpressionType(scope symbol.Scope, linearized []*ast.Le
 	return currentType, nil
 }
 
-func getLeafType(scope symbol.Scope, leaf *ast.Leaf) (symbol.BuiltinType, error) {
+func getLeafType(
+	ctx interface {
+		context.ErrorsContext
+		context.NeutralizerContext
+	},
+	scope symbol.Scope,
+	leaf *ast.Leaf,
+) (symbol.BuiltinType, error) {
 	switch leaf.ID {
 	case token.IntLiteral:
 		return symbol.BuiltinTypeInt, nil
@@ -157,9 +174,9 @@ func getLeafType(scope symbol.Scope, leaf *ast.Leaf) (symbol.BuiltinType, error)
 	case token.BoolLiteral:
 		return symbol.BuiltinTypeBool, nil
 	case token.UserDefined:
-		s, ok := scope.Lookup(&symbol.Name{Name: leaf.Value})
-		if !ok {
-			return symbol.BuiltinTypeUnknown, fmt.Errorf("symbol %s not found", leaf.Value)
+		s, err := ctx.Neutralizer().NeutralizeUserDefined(scope, leaf.Value)
+		if err != nil {
+			return symbol.BuiltinTypeUnknown, err
 		}
 
 		switch s := s.(type) {
