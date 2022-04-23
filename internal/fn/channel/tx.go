@@ -28,7 +28,7 @@ func (c *TxChannel[T]) Commit() {
 		return
 	}
 
-	c.transactions[len(c.transactions)-1] = nil
+	c.transactions = c.transactions[:len(c.transactions)-1]
 }
 
 // Rollback adds values from ongoing transaction to the rollback list and starts a new transaction.

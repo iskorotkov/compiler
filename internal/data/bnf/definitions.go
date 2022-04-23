@@ -140,9 +140,9 @@ func init() {
 	}}
 
 	MultiplicativeOperand = Either{Name: "multiplicative-operand", BNFs: []BNF{
-		&FunctionUsage,
 		&Variable,
 		&Constant,
+		&FunctionCall,
 		Sequence{BNFs: []BNF{
 			Token{ID: token.OpeningParenthesis},
 			&Expression,
@@ -165,7 +165,7 @@ var (
 	FunctionHeader     Sequence
 	FunctionDefinition Sequence
 	Functions          Several
-	FunctionUsage      Sequence
+	FunctionCall       Sequence
 	FunctionReturnType Sequence
 )
 
@@ -230,19 +230,17 @@ func init() {
 		&FunctionBlock,
 	}, Markers: ast.Markers{ast.MarkerFuncDecl: true}}
 
-	FunctionUsage = Sequence{Name: "function-usage", BNFs: []BNF{
+	FunctionCall = Sequence{Name: "function-call", BNFs: []BNF{
 		&FunctionName,
+		Token{ID: token.OpeningParenthesis},
 		Optional{BNF: Sequence{BNFs: []BNF{
-			Token{ID: token.OpeningParenthesis},
-			Optional{BNF: Sequence{BNFs: []BNF{
+			&FactualParameter,
+			Several{BNF: Sequence{BNFs: []BNF{
+				Token{ID: token.Comma},
 				&FactualParameter,
-				Several{BNF: Sequence{BNFs: []BNF{
-					Token{ID: token.Comma},
-					&FactualParameter,
-				}}},
 			}}},
-			Token{ID: token.ClosingParenthesis},
 		}}},
+		Token{ID: token.ClosingParenthesis},
 	}, Markers: ast.Markers{ast.MarkerFuncCall: true}}
 }
 
@@ -304,10 +302,14 @@ var (
 )
 
 func init() {
-	SimpleOperator = Either{Name: "simple-operator", BNFs: []BNF{&AssignmentOperator}}
 	ConditionOperator = Either{Name: "condition-operator", BNFs: []BNF{&If}}
 	Operators = Sequence{Name: "operators", BNFs: []BNF{&CompositeOperator}}
 	Block = Sequence{Name: "block", BNFs: []BNF{&Operator}, Markers: ast.Markers{ast.MarkerBlock: true}}
+
+	SimpleOperator = Either{Name: "simple-operator", BNFs: []BNF{
+		&FunctionCall,
+		&AssignmentOperator,
+	}}
 
 	// TODO: Syntax analyzer is very sensitive to extra semicolons.
 	Operator = Optional{Name: "operator", BNF: Either{BNFs: []BNF{
@@ -381,7 +383,7 @@ func init() {
 var (
 	VariableName      Sequence
 	FullVariable      Sequence
-	Variable          Either
+	Variable          Sequence
 	SameTypeVariables Sequence
 	Variables         Optional
 )
@@ -389,7 +391,7 @@ var (
 func init() {
 	VariableName = Sequence{Name: "variable-name", BNFs: []BNF{Token{ID: token.UserDefined}}}
 	FullVariable = Sequence{Name: "full variable", BNFs: []BNF{&VariableName}}
-	Variable = Either{Name: "variable", BNFs: []BNF{&FullVariable}}
+	Variable = Sequence{Name: "variable", BNFs: []BNF{&FullVariable}}
 
 	SameTypeVariables = Sequence{Name: "same-type-variables", BNFs: []BNF{
 		Token{ID: token.UserDefined, Markers: ast.Markers{ast.MarkerName: true}},

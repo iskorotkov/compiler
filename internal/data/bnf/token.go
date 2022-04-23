@@ -23,8 +23,6 @@ func (tk Token) Build(ctx interface {
 	context.LoggerContext
 	context.NeutralizerContext
 }, ch *channel.TxChannel[option.Option[token.Token]]) (ast.Node, error) {
-	defer ch.Rollback()
-
 	ctx, cancel := context.Scoped(ctx, tk.String())
 	defer cancel()
 
@@ -34,8 +32,7 @@ func (tk Token) Build(ctx interface {
 		return nil, fmt.Errorf("token error: %v", err)
 	}
 
-	_, err = ctx.Neutralizer().Neutralize(tk.ID, t)
-	if err != nil {
+	if _, err = ctx.Neutralizer().Neutralize(tk.ID, t); err != nil {
 		if errors.Is(err, syntax_neutralizer.UnfixableError) {
 			ctx.Logger().Warnf("unfixable syntax error: %v", err)
 			return nil, fmt.Errorf("%v: expected %q, got %q: %w", t.Literal, tk, t.ID, ErrUnexpectedToken)
@@ -44,8 +41,7 @@ func (tk Token) Build(ctx interface {
 		ctx.Logger().Infof("fixed syntax error: %v", err)
 	}
 
-	ctx.Logger().Infof("commit")
-	ch.Commit()
+	ctx.Logger().Infof("ok")
 
 	return ast.Token(t, tk.Markers), nil
 }

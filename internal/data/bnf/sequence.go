@@ -22,8 +22,6 @@ func (s Sequence) Build(ctx interface {
 	context.LoggerContext
 	context.NeutralizerContext
 }, ch *channel.TxChannel[option.Option[token.Token]]) (ast.Node, error) {
-	defer ch.Rollback()
-
 	ctx, cancel := context.Scoped(ctx, s.Name)
 	defer cancel()
 
@@ -31,7 +29,7 @@ func (s Sequence) Build(ctx interface {
 	for _, item := range s.BNFs {
 		res, err := item.Build(ctx, ch)
 		if err != nil {
-			ctx.Logger().Warnf("%v in %v, returning", err, s)
+			ctx.Logger().Debugf("%v in %v, returning", err, s)
 			return nil, err
 		}
 
@@ -40,8 +38,7 @@ func (s Sequence) Build(ctx interface {
 		}
 	}
 
-	ctx.Logger().Infof("commit")
-	ch.Commit()
+	ctx.Logger().Debugf("ok")
 
 	return ast.WrapSlice(items, s.Markers), nil
 }

@@ -63,10 +63,7 @@ func (g *Generator) Generate(
 				return
 			}
 
-			var (
-				imports []Import
-				globals []Global
-			)
+			var globals []Global
 			for _, s := range program.Scope.Symbols() {
 				switch s := s.(type) {
 				case *symbol.Type:
@@ -94,18 +91,42 @@ func (g *Generator) Generate(
 				}
 			}
 
-			statements := g.buildFuncBody(ctx, program.Scope, program.Node)
-
 			m := Module{
-				Imports: imports,
+				Imports: []Import{
+					// Add writeln function that invokes console.log imported from JS.
+					// We use f64 as a param type because we don't need string support,
+					// and i32 can be converted to f64 without loss of precision.
+					{
+						Path: []string{"console", "log"},
+						Name: "writeln_i32",
+						Params: []Param{
+							{
+								Name: "value",
+								Type: TypeI32,
+							},
+						},
+						Return: nil,
+					},
+					{
+						Path: []string{"console", "log"},
+						Name: "writeln_f64",
+						Params: []Param{
+							{
+								Name: "value",
+								Type: TypeF64,
+							},
+						},
+						Return: nil,
+					},
+				},
 				Globals: globals,
 				Funcs: []Func{
-					// Main functions (program executions starts here).
+					// Main function (program execution starts here).
 					{
 						Name:   "main",
 						Params: nil,
 						Return: nil,
-						Body:   statements,
+						Body:   g.buildFuncBody(ctx, program.Scope, program.Node),
 					},
 					// TODO: Add support for other functions
 				},
@@ -132,6 +153,7 @@ func (g *Generator) buildFuncBody(
 		ast.MarkerFor,
 		ast.MarkerWhile,
 		ast.MarkerRepeat,
+		ast.MarkerFuncCall,
 	)
 
 	var statements []Statement
@@ -145,7 +167,7 @@ func (g *Generator) buildFuncBody(
 				Query(ast.QueryTypeOne, ast.MarkerRightSide)[0].
 				Query(ast.QueryTypeOne, ast.MarkerExpr)[0]
 
-			wasmExpr, err := g.buildExpression(scope, expr)
+			wasmExpr, _, err := g.buildExpression(scope, expr)
 			if err != nil {
 				ctx.Logger().Errorf("%s: %s", variable.Value, err)
 				continue
@@ -159,7 +181,7 @@ func (g *Generator) buildFuncBody(
 			expr := node.
 				Query(ast.QueryTypeOne, ast.MarkerExpr)[0]
 
-			wasmExpr, err := g.buildExpression(scope, expr)
+			wasmExpr, _, err := g.buildExpression(scope, expr)
 			if err != nil {
 				ctx.Logger().Errorf("%v: %s", expr, err)
 				continue
@@ -185,7 +207,7 @@ func (g *Generator) buildFuncBody(
 			expr := node.
 				Query(ast.QueryTypeOne, ast.MarkerExpr)[0]
 
-			wasmExpr, err := g.buildExpression(scope, expr)
+			wasmExpr, _, err := g.buildExpression(scope, expr)
 			if err != nil {
 				ctx.Logger().Errorf("%v: %s", expr, err)
 				continue
@@ -209,6 +231,29 @@ func (g *Generator) buildFuncBody(
 		case node.Has(ast.MarkerRepeat):
 			// TODO: Add support for repeat loops.
 			panic("repeat loop is not supported yet")
+		case node.Has(ast.MarkerFuncCall):
+			name := node.Query(ast.QueryTypeOne, ast.MarkerName)[0].(*ast.Leaf)
+			if name.Value != "writeln" {
+				panic("only writeln function is supported")
+			}
+
+			args := node.Query(ast.QueryTypeTop, ast.MarkerFuncArg)
+			if len(args) != 1 {
+				panic("only one argument is supported")
+			}
+
+			argExpr, builtinType, err := g.buildExpression(scope, args[0])
+			if err != nil {
+				ctx.Logger().Errorf("%v: %s", args[0], err)
+				continue
+			}
+
+			funcName := fmt.Sprintf("%s_%s", name.Value, g.convertToWASMType(builtinType))
+
+			statements = append(statements, &FuncCall{
+				Name: funcName,
+				Args: []Expr{argExpr},
+			})
 		default:
 			panic("unknown node marker")
 		}
@@ -227,10 +272,11 @@ func (e exprTree) Leaf() bool {
 	return e.left == nil && e.right == nil
 }
 
-func (g *Generator) buildExpression(scope symbol.Scope, node ast.Node) (Expr, error) {
+func (g *Generator) buildExpression(scope symbol.Scope, node ast.Node) (Expr, symbol.BuiltinType, error) {
 	leafs := g.linearizeExpression(node)
 	tree := g.buildExprTree(scope, leafs)
-	return g.convertToWASMExpr(scope, *tree)
+	expr, err := g.convertToWASMExpr(scope, *tree)
+	return expr, tree.builtinType, err
 }
 
 func (g *Generator) convertToWASMExpr(scope symbol.Scope, tree exprTree) (Expr, error) {

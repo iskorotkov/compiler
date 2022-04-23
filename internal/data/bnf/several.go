@@ -23,23 +23,27 @@ func (s Several) Build(ctx interface {
 	context.LoggerContext
 	context.NeutralizerContext
 }, ch *channel.TxChannel[option.Option[token.Token]]) (ast.Node, error) {
-	defer ch.Rollback()
-
 	ctx, cancel := context.Scoped(ctx, s.Name)
 	defer cancel()
 
 	var items []ast.Node
 	for {
-		res, err := s.BNF.Build(ctx, ch)
-		if errors.Is(err, ErrUnexpectedToken) {
-			ch.Commit()
-			ctx.Logger().Infof("%v in %v, committing tx", err, s)
+		ch := ch.StartTx()
 
-			return ast.WrapSlice(items, s.Markers), nil
-		} else if err != nil {
-			ctx.Logger().Warnf("%v in %v, returning", err, s)
-			return nil, err
+		res, err := s.BNF.Build(ctx, ch)
+		if err != nil {
+			ch.Rollback()
+
+			if errors.Is(err, ErrUnexpectedToken) {
+				ctx.Logger().Debugf("%v in %v, commit tx", err, s)
+				return ast.WrapSlice(items, s.Markers), nil
+			} else {
+				ctx.Logger().Debugf("%v in %v, returning", err, s)
+				return nil, err
+			}
 		}
+
+		ch.Commit()
 
 		if res != nil {
 			items = append(items, res)
