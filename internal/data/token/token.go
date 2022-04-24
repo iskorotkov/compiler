@@ -19,9 +19,10 @@ func New(id ID, lit literal.Literal) Token {
 }
 
 func (t Token) String() string {
-	if t.ID == UserDefined {
+	switch t.ID {
+	case UserDefined, IntLiteral, DoubleLiteral, BoolLiteral, EOF:
 		return fmt.Sprintf("%v %v", t.ID, t.Literal)
+	default:
+		return t.Literal.String()
 	}
-
-	return t.Literal.String()
 }
