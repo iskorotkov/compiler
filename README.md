@@ -141,7 +141,7 @@ func (c TypeChecker) Check(
 
 ### Обработка ошибок
 
-Модули компилятора добавляют выводят сообщения об ошибках в `stderr`. Помимо этого модули могут добавлять сообщения об ошибках, которые всегда будут отображаться пользователю и сигнализировать об ошибках в исходном коде программы на `Pascal`. Добавление таких ошибок происходит через контекст. Для этого используется следующий интерфейс:
+Модули компилятора добавляют выводят сообщения об ошибках в stderr. Помимо этого модули могут добавлять сообщения об ошибках, которые всегда будут отображаться пользователю и сигнализировать об ошибках в исходном коде программы на Pascal. Добавление таких ошибок происходит через контекст. Для этого используется следующий интерфейс:
 
 ```go
 package context
@@ -379,7 +379,166 @@ type Node interface {
 
 Для обработки вложенных областей видимости используется [специальная структура данных, имеющая ссылку на своего родителя - `Scope`](internal/data/symbol/scope.go). Это позволяет при работе с областью видимости сначала производить поиск в ней самой, а после - в родительской области видимости.
 
-### Code generator
+### Code generator (WASM)
+
+#### WAT
+
+Кодогенератор компилятора сначала генерирует код на WAT (WebAssembly Text), используя построенное ранее аннотированное AST. При генерации WAT создается структура [`Module`](internal/module/wasm/module.go), которая затем преобразуется в текстовое представление и выводится в качестве результата:
+
+```go
+m := Module{
+	Imports: []Import{
+		// Add writeln function that invokes console.log imported from JS.
+		// We use f64 as a param type because we don't need string support,
+		// and i32 can be converted to f64 without loss of precision.
+		{
+			Path: []string{"console", "log"},
+			Name: "writeln_i32",
+			Params: []Param{
+				{
+					Name: "value",
+					Type: TypeI32,
+				},
+			},
+			Return: nil,
+		},
+		{
+			Path: []string{"console", "log"},
+			Name: "writeln_f64",
+			Params: []Param{
+				{
+					Name: "value",
+					Type: TypeF64,
+				},
+			},
+			Return: nil,
+		},
+	},
+	Globals: globals,
+	Funcs: []Func{
+		// Main function (program execution starts here).
+		{
+			Name:   "main",
+			Params: nil,
+			Return: nil,
+			Body:   g.buildFuncBody(ctx, program.Scope, program.Node),
+		},
+	},
+}
+```
+
+В модуль добавляются импорты функций, необходимых для реализации вывода в программах WASM, объявляются глобальные переменные и константы, после чего добавляется тело функции `main`. Результирующий WAT выглядит следующим образом:
+
+```wat
+;; Объявление модуля.
+(module
+  ;; Импорт функций из JS, через которые осуществляется вывод.
+  (import "console" "log" (func $writeln_i32 (param $value i32)))
+  (import "console" "log" (func $writeln_f64 (param $value f64)))
+  ;; Определение глобальных переменных (mut значит, что переменная изменяемая).
+  (global $i (mut i32) (i32.const 0))
+  (global $count (mut i32) (i32.const 0))
+  ;; Определение основной функции.
+  (func (export "main")
+    ;; Присваивания
+    (global.set $count (i32.const 1))
+    (global.set $i (i32.const 4))
+
+    ;; Цикл.
+    (if (i32.lt_s (global.get $i) (i32.const 5))
+      (then
+        (loop
+          (call $writeln_i32 (global.get $i))
+          (call $writeln_i32 (global.get $count))
+          (global.set $i (i32.add (global.get $i) (i32.const 1)))
+          (global.set $count (i32.mul (global.get $count) (i32.const 2)))
+          (br_if 0 (i32.lt_s (global.get $i) (i32.const 5)))
+        )
+      )
+    )
+
+    ;; Вывод в консоль через импортированные функции.
+    (call $writeln_i32 (global.get $i))
+    (call $writeln_i32 (global.get $count))
+  )
+)
+
+```
+
+#### WAT to WASM
+
+Цель генерации кода - код на WASM, который можно выполнять в браузере. После получения файла WAT необходимо использовать программу `wat2wasm` для получения исполняемого бинарного файла. `wat2wasm` входит в состав официального WebAssembly Binary Toolkit (пакет `wabt`). Полученный файл может быть исполнен в браузере.
+
+Компилятор выполняет необходимое преобразование самостоятельно, если доступна программа `wat2wasm`, и сохраняет файл WASM рядом с файлом WAT.
+
+#### Browser
+
+Скомпилированные модули WASM исполняются в браузере, но для вызова их функций необходимо использовать JS. Вызов функции из WASM выглядит так:
+
+```js
+// Загружаем модуль в файле main.wasm.
+WebAssembly.instantiateStreaming(fetch('/main.wasm'), importObject).then(
+  (obj) => {
+    console.log('loaded wasm file')
+    // Вызываем экспоритрованную функцию.
+    obj.instance.exports.main()
+    console.log('wasm file executed')
+  },
+)
+```
+
+Этот код на JS расположен в файле [index.html](index.html). Для запуска модуля WASM необходимо запустить файловый сервер в корневой папке репозитория и открыть файл [index.html](index.html) в браузере. Без файлового сервера модуль WASM не будет загружаться браузером.
+
+#### Импорт функций
+
+Для корректной работы программ необходимо, чтобы JS экспортировал функцию вывода в консоль, т. к. в WebAssembly такой функции нет (как `writeln` в Pascal). Для этого в JS необходимо передать объект-контекст с экспортируемыми (доступными из WebAssembly) функциями:
+
+```js
+// Объект-контекст.
+const importObject = {
+  console: {
+    log: console.log, // экспортирует функцию console.log по пути console.log.
+  },
+}
+
+// Используем объект-контекст при загрузке модуля WASM.
+WebAssembly.instantiateStreaming(fetch('/main.wasm'), importObject).then(
+  (obj) => {
+    console.log('loaded wasm file')
+    obj.instance.exports.main()
+    console.log('wasm file executed')
+  },
+)
+```
+
+При этом в WebAssembly для использования этой функции ее нужно импортировать:
+
+```wat
+;; ...
+(import "console" "log" (func $writeln_i32 (param $value i32)))
+(import "console" "log" (func $writeln_f64 (param $value f64)))
+;; ...
+```
+
+Она импортируется дважды с двумя разными именами и типами параметров, т. к. нам нужно вызывать ее и для `i32` (целых чисел), и для `f64` (вещественных чисел).
+
+#### Экспорт функций
+
+Для возможности вызова WASM функций из JS, их необходимо экспортировать:
+
+```wat
+;; ...
+(func (export "main")
+;; ...
+```
+
+После этого из JS можно получить доступ к экспортированным функциям:
+
+```js
+// ...
+obj.instance.exports.main()
+// ...
+```
 
 ## Тестирование
 
