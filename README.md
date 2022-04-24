@@ -91,7 +91,7 @@ type LoggerContext interface {
 }
 
 type ErrorsContext interface {
-	AddError(position literal.Position, err error)
+	AddError(source ErrorSource, position literal.Position, err error)
 	Errors() []Error
 }
 
@@ -141,39 +141,21 @@ func (c TypeChecker) Check(
 
 ### Обработка ошибок
 
-Любой из модулей может прервать работу конвейера при возникновении критической ошибки. В остальных случаях модуль передает ошибку дальше для обработки следующим модулем. Это возможно благодаря тому, что по каналам передаются не обязательно только результаты работы в случае успеха, а [дизъюнктивное объединение](https://ru.wikipedia.org/wiki/%D0%A2%D0%B8%D0%BF-%D1%81%D1%83%D0%BC%D0%BC%D0%B0) результата успеха и ошибки.
-
-Тип `Option` описан следующим образом:
+Модули компилятора добавляют выводят сообщения об ошибках в `stderr`. Помимо этого модули могут добавлять сообщения об ошибках, которые всегда будут отображаться пользователю и сигнализировать об ошибках в исходном коде программы на `Pascal`. Добавление таких ошибок происходит через контекст. Для этого используется следующий интерфейс:
 
 ```go
-package option
+package context
 
-type Option[T any] struct {
-	ok  T
-	err error
+// source - место (модуль) обнаружения ошибки.
+// position - место в исходном коде, где обнаружена ошибка.
+// err - текст ошибки.
+type ErrorsContext interface {
+	AddError(source ErrorSource, position literal.Position, err error)
+	Errors() []Error
 }
-
-func (o Option[T]) Unwrap() (T, error) {
-	return o.ok, o.err
-}
-
-func (o Option[T]) String() string {
-	if reflect.ValueOf(&o).Elem().FieldByName("err").IsNil() {
-		return fmt.Sprintf("ok: %v", o.ok)
-	}
-
-	return fmt.Sprintf("err: %v", o.err)
-}
-
-func Ok[T any](val T) Option[T] {
-	return Option[T]{ok: val}
-}
-
-func Err[T any](err error) Option[T] {
-	return Option[T]{err: err}
-}
-
 ```
+
+Список ошибок выводится в конце работы программы, при этом в выводе ошибки отсортированы по месту их возникновения в исходном коде.
 
 ### Нейтрализация ошибок
 

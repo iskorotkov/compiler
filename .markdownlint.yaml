@@ -8,3 +8,7 @@ line_length: false
 spaces: true
 url: true
 whitespace: true
+
+MD010:
+  code_blocks: false
+  spaces_per_tab: 2
