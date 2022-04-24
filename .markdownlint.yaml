@@ -12,3 +12,13 @@ whitespace: true
 MD010:
   code_blocks: false
   spaces_per_tab: 2
+MD033:
+  allowed_elements:
+    - 'table'
+    - 'thead'
+    - 'tbody'
+    - 'tr'
+    - 'th'
+    - 'td'
+    - 'code'
+    - 'pre'

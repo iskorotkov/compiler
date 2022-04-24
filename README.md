@@ -572,6 +572,203 @@ obj.instance.exports.main()
 
 С включенным [режимом отладки](#Отладка) также можно отлаживать работу компилятора на различных программах.
 
+## Примеры
+
+Примеры программ на Pascal, на которых тестировалась работа компилятора, находятся в папке `testdata/programs`.
+
+Примеры программ на Pascal и соответствующие им программы на WASM находятся в папке `examples/programs`.
+
+В файле [`examples/demo.wat`](examples/demo.wat) приведен пример программы WASM, использующий все основные синтаксические конструкции, используемые при генерации кода компиляторам.
+
+Сравнение программ на Pascal/WASM приведено в следующей таблице:
+
+<table>
+    <thead><tr>
+            <th>Filename</th>
+            <th>Pascal</th>
+            <th>WASM</th>
+    </tr></thead>
+    <tbody>
+        <tr>
+            <td>assignments</td>
+            <td><pre><code>program p;
+var i,j:integer;
+begin
+i:=1;
+j:=i+2;
+end.</code></pre></td>
+            <td><pre><code>(module
+  (import "console" "log" (func $writeln_i32 (param $value i32)))
+  (import "console" "log" (func $writeln_f64 (param $value f64)))
+  (global $i (mut i32) (i32.const 0))
+  (global $j (mut i32) (i32.const 0))
+  (func (export "main")
+    (global.set $i (i32.const 1))
+    (global.set $j (i32.add (global.get $i) (i32.const 2)))
+  )
+)</code></pre></td>
+        </tr>
+        <tr>
+            <td>complex-if</td>
+            <td><pre><code>program p;
+var b: boolean;
+    x, y: integer;
+begin
+  x := 0;
+  if b then
+  begin
+    x := 100;
+    y := 200;
+  end
+end.
+</code></pre></td>
+            <td><pre><code>(module
+  (import "console" "log" (func $writeln_i32 (param $value i32)))
+  (import "console" "log" (func $writeln_f64 (param $value f64)))
+  (global $b (mut i32) (i32.const 0))
+  (global $x (mut i32) (i32.const 0))
+  (global $y (mut i32) (i32.const 0))
+  (func (export "main")
+    (global.set $x (i32.const 0))
+    (if (global.get $b)
+      (then
+        (global.set $x (i32.const 100))
+        (global.set $y (i32.const 200))
+      )
+    )
+  )
+)</code></pre></td>
+        </tr>
+        <tr>
+            <td>if-eq</td>
+            <td><pre><code>program p;
+var x: integer;
+begin
+  x := 0;
+  if x + 1 < 5 then
+    x := 100;
+end.
+</code></pre></td>
+            <td><pre><code>(module
+  (import "console" "log" (func $writeln_i32 (param $value i32)))
+  (import "console" "log" (func $writeln_f64 (param $value f64)))
+  (global $x (mut i32) (i32.const 0))
+  (func (export "main")
+    (global.set $x (i32.const 0))
+    (if (i32.lt_s (i32.add (global.get $x) (i32.const 1)) (i32.const 5))
+      (then
+        (global.set $x (i32.const 100))
+      )
+    )
+  )
+)</code></pre></td>
+        </tr>
+        <tr>
+            <td>if</td>
+            <td><pre><code>program p;
+var b: boolean;
+    x: integer;
+begin
+  b := true;
+  x := 0;
+  if b then
+    x := 100;
+  writeln(x);
+end.
+</code></pre></td>
+            <td><pre><code>(module
+  (import "console" "log" (func $writeln_i32 (param $value i32)))
+  (import "console" "log" (func $writeln_f64 (param $value f64)))
+  (global $b (mut i32) (i32.const 0))
+  (global $x (mut i32) (i32.const 0))
+  (func (export "main")
+    (global.set $b (i32.const 1))
+    (global.set $x (i32.const 0))
+    (if (global.get $b)
+      (then
+        (global.set $x (i32.const 100))
+      )
+    )
+    (call $writeln_i32 (global.get $x))
+  )
+)</code></pre></td>
+        </tr>
+        <tr>
+            <td>math</td>
+            <td><pre><code>program p;
+const PI = 3.14;
+      E = 2.71;
+      R = 16;
+var p, square, res: real;
+begin
+  p := 2.0 *PI* R;
+  square := PI *R* R;
+  res := 14.5 *p + 123 + square + 12.7128;
+  writeln(p);
+end.
+</code></pre></td>
+            <td><pre><code>(module
+  (import "console" "log" (func $writeln_i32 (param $value i32)))
+  (import "console" "log" (func $writeln_f64 (param $value f64)))
+  (global $square (mut f64) (f64.const 0.0))
+  (global $res (mut f64) (f64.const 0.0))
+  (global $PI f64 (f64.const 3.14))
+  (global $E f64 (f64.const 2.71))
+  (global $R i32 (i32.const 16))
+  (global $p (mut f64) (f64.const 0.0))
+  (func (export "main")
+    (global.set $p (f64.mul (f64.const 2.0) (f64.mul (global.get $PI) (f64.convert_i32_s (global.get $R)))))
+    (global.set $square (f64.mul (global.get $PI) (f64.convert_i32_s (i32.mul (global.get $R) (global.get $R)))))
+    (global.set $res (f64.add (f64.mul (f64.const 14.5) (global.get $p)) (f64.add (f64.convert_i32_s (i32.const 123)) (f64.add (global.get $square) (f64.const 12.7128)))))
+    (call $writeln_f64 (global.get $p))
+  )
+)</code></pre></td>
+        </tr>
+        <tr>
+            <td>while</td>
+            <td><pre><code>program p;
+var i, count: integer;
+begin
+  count := 1;
+  i := 0;
+  while i < 5 do
+  begin
+    writeln(i);
+    writeln(count);
+    i := i + 1;
+    count := count* 2;
+  end;
+  writeln(i);
+  writeln(count);
+end.
+</code></pre></td>
+            <td><pre><code>(module
+  (import "console" "log" (func $writeln_i32 (param $value i32)))
+  (import "console" "log" (func $writeln_f64 (param $value f64)))
+  (global $i (mut i32) (i32.const 0))
+  (global $count (mut i32) (i32.const 0))
+  (func (export "main")
+    (global.set $count (i32.const 1))
+    (global.set $i (i32.const 0))
+    (if (i32.lt_s (global.get $i) (i32.const 5))
+      (then
+        (loop
+          (call $writeln_i32 (global.get $i))
+          (call $writeln_i32 (global.get $count))
+          (global.set $i (i32.add (global.get $i) (i32.const 1)))
+          (global.set $count (i32.mul (global.get $count) (i32.const 2)))
+          (br_if 0 (i32.lt_s (global.get $i) (i32.const 5)))
+        )
+      )
+    )
+    (call $writeln_i32 (global.get $i))
+    (call $writeln_i32 (global.get $count))
+  )
+)</code></pre></td>
+        </tr>
+    </tbody>
+</table>
+
 ## Отладка
 
 Компилятор в ходе работы выводит в лог информацию для отладки, если при запуске компилятора переменная окружения `DEBUG` имеет значение `1`. Это позволяет значительно проще и быстрее обнаружить, локализовать и устранить ошибку в реализации компилятора. Кроме того, компилятор не засоряет логами вывод, если переменная `DEBUG` не установлена или установлена в другое значение, что улучшает UX.

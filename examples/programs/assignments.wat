@@ -1,0 +1,10 @@
+(module
+  (import "console" "log" (func $writeln_i32 (param $value i32)))
+  (import "console" "log" (func $writeln_f64 (param $value f64)))
+  (global $i (mut i32) (i32.const 0))
+  (global $j (mut i32) (i32.const 0))
+  (func (export "main")
+    (global.set $i (i32.const 1))
+    (global.set $j (i32.add (global.get $i) (i32.const 2)))
+  )
+)

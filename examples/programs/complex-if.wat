@@ -1,0 +1,16 @@
+(module
+  (import "console" "log" (func $writeln_i32 (param $value i32)))
+  (import "console" "log" (func $writeln_f64 (param $value f64)))
+  (global $b (mut i32) (i32.const 0))
+  (global $x (mut i32) (i32.const 0))
+  (global $y (mut i32) (i32.const 0))
+  (func (export "main")
+    (global.set $x (i32.const 0))
+    (if (global.get $b)
+      (then
+        (global.set $x (i32.const 100))
+        (global.set $y (i32.const 200))
+      )
+    )
+  )
+)
