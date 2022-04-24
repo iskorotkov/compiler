@@ -76,7 +76,7 @@ compiled successfully
 [Scanner (сканер, лексический анализатор)](#scanner) =>
 [Syntax analyzer (синтаксический анализатор)](#syntax-analyzer) =>
 [Type checker (семантический анализатор)](#type-checker) =>
-[Code generator (генератор кода)](#code-generator).
+[Code generator (генератор кода)](#code-generator-wasm).
 
 ### Передача общих зависимостей через контекст
 
