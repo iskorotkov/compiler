@@ -11,7 +11,7 @@
 Для получения бинарного файла (рекомендуется) выполните:
 
 ```shell
-go build -o build cmd/compiler/main.go
+go build -o compiler cmd/compiler/main.go
 ```
 
 Для запуска компилятора без создания бинарного файла выполните:
@@ -22,10 +22,12 @@ go run cmd/compiler/main.go
 
 ## Использование
 
-Существует два способа запустить компилятор:
+Существует несколько способов запустить компилятор:
 
 ```shell
-# Режим чтения из файла:
+# Режим чтения из файла и записи в файл:
+./compiler program.pas main.wat
+# Режим чтения из файла и вывода в консоль:
 ./compiler program.pas
 # и режим чтения из стандартного ввода-вывода:
 ./compiler
@@ -35,20 +37,21 @@ go run cmd/compiler/main.go
 
 ```shell
 # Несуществующий файл или файл, к которому нет доступа
-./compiler program.pas
-> open program.pas: no such file or directory
+$ ./compiler program.pas
+open program.pas: no such file or directory
 
 # Файл с корректной программой:
-./compiler program.pas
-> compiled successfully
+$ ./compiler program.pas
+compiled successfully
 
 # Файл с некорректной программой:
-./compiler program.pas
-> "module" at 1:1-7: expected "program", got "module": unexpected token
+$ ./compiler program.pas
+finished with 1 error(s)
+SYNTAX 1:1-7: unexpected token: expected "program", got "module"
 
 # Чтение из стандартного ввода-вывода (корректная программа):
-cat program.pas | ./compiler
-> compiled successfully
+$ cat program.pas | ./compiler
+compiled successfully
 ```
 
 ## Архитектура
@@ -78,6 +81,8 @@ cat program.pas | ./compiler
 ```go
 package context
 
+// Интерфейс со всеми возможными зависимостями.
+// Нужен для проверки, что NewDevContext и NewProdContext возвращают объекты со всеми инициализированными зависимостями.
 type FullContext interface {
 	context.Context
 	LoggerContext
@@ -236,7 +241,7 @@ var (
 
 #### БНФ
 
-Синтаксис языка Паскаль описан в виде переменных, отражающих описание синтаксиса языка в формате БНФ из книги Л. Залоговой "Разработка Паскаль-компилятора". Все переменные удовлетворяют интерфейсу [BNF](internal/data/bnf/bnf.go) и имеют методы `String()` (для вывода в процессе отладки) и `Accept(log *zap.SugaredLogger, tokensCh *channel.TransactionChannel[option.Option[token.Token]]) error` для обработки поданных на вход токенов.
+Синтаксис языка Паскаль описан в виде переменных, отражающих описание синтаксиса языка в формате БНФ из книги Л. Залоговой "Разработка Паскаль-компилятора". Все переменные удовлетворяют интерфейсу [BNF](internal/data/bnf/bnf.go) и имеют методы `String` (для вывода в процессе отладки) и `Build` для обработки поданных на вход токенов.
 
 Для описания общих паттернов, используемых в БНФ, используются вспомогательные структуры:
 
@@ -336,9 +341,16 @@ func init() {
 ```go
 package ast
 
+// Узел AST.
 type Node interface {
+	// Поиск узлов дерева с указанными маркерами.
+	// queryType - какие узлы и в каком количестве искать.
+	// markers - искомые маркеры.
 	Query(queryType QueryType, markers ...Marker) []Node
+	// Проверка существования данного маркера у узла.
 	Has(marker Marker) bool
+	// Получение положения узла AST.
+	// Возвращает положение токена (если узел является листом) или объединение положений потомков (если узел является ветвлением).
 	Position() literal.Position
 	fmt.Stringer
 }
