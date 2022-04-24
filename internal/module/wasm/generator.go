@@ -3,6 +3,7 @@ package wasm
 import (
 	"fmt"
 	"os/exec"
+	"strings"
 
 	"github.com/iskorotkov/compiler/internal/context"
 	"github.com/iskorotkov/compiler/internal/data/ast"
@@ -51,8 +52,8 @@ func (g *Generator) Generate(
 		context.ErrorsContext
 	},
 	input <-chan typechecker.Result,
-) chan struct{} {
-	ch := make(chan struct{})
+) chan Module {
+	ch := make(chan Module)
 
 	go func() {
 		defer close(ch)
@@ -133,8 +134,7 @@ func (g *Generator) Generate(
 				},
 			}
 
-			s := m.String()
-			fmt.Println(s)
+			ch <- m
 		}
 	}()
 
@@ -466,13 +466,15 @@ func (g *Generator) defaultValue(t symbol.BuiltinType) string {
 	}
 }
 
-func (g *Generator) wat2Wasm(watFilename string) (string, error) {
+func (g *Generator) WAT2WASM(watFilename string) (string, error) {
 	file, err := exec.LookPath("wat2wasm")
 	if err != nil {
 		return "", err
 	}
 
-	cmd := exec.Command(file, watFilename)
+	wasmFilename := strings.Replace(watFilename, ".wat", ".wasm", 1)
+
+	cmd := exec.Command(file, watFilename, "-o", wasmFilename)
 	if err := cmd.Run(); err != nil {
 		b, _ := cmd.CombinedOutput()
 		return string(b), err

@@ -48,7 +48,27 @@ func compile(ctx context.FullContext, r io.Reader) {
 	results := checker.Check(ctx, programs)
 
 	generator := wasm.NewGenerator()
-	<-generator.Generate(ctx, results)
+	if m, ok := <-generator.Generate(ctx, results); ok {
+		if len(os.Args) > 2 {
+			file, err := os.Create(os.Args[2])
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			if _, err = file.WriteString(m.String()); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			if _, err := generator.WAT2WASM(file.Name()); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		} else {
+			fmt.Println(m.String())
+		}
+	}
 
 	writeReport(ctx)
 }
