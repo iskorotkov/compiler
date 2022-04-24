@@ -49,6 +49,22 @@ $ ./compiler program.pas
 finished with 1 error(s)
 SYNTAX 1:1-7: unexpected token: expected "program", got "module"
 
+# Файл с некорректной программой (с нейтрализацией синтаксических и семантических ошибок).
+# Компилятор определяет опечатки и предлагает пользователю заменить слово с ошибкой на корректное.
+# При этом компилятор продолжает анализ всей программы, не прерываясь при возникновении первой ошибки.
+# Компилятор обнаруживает как ошибки в ключевых словах (program, begin),
+# так и в пользовательских идентификаторах (a, square).
+# Все ошибки сортируются по порядку их встречи в исходном коде.
+$ ./compiler program.pas
+finished with 7 error(s)
+CODEGEN 0:0-0: WASM generation skipped due to errors
+SYNTAX 1:1-7: replace progrm with program
+SYNTAX 3:1-5: replace begn with begin
+TYPECHECK 4:3-12: replace aa with a
+SYNTAX 6:1-9: replace functiox with function
+TYPECHECK 8:3-8: replace squae with square
+SYNTAX 10:1-5: replace bein with begin
+
 # Чтение из стандартного ввода-вывода (корректная программа):
 $ cat program.pas | ./compiler
 compiled successfully
