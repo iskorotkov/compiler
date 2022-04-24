@@ -15,21 +15,19 @@
         )
 
         (if (i32.eq (i32.const 1) (i32.const 0))
-            (block
+            (then
                 (i32.const 0)
                 call $log_i32
             )
-            (block
+            (else
                 (i32.const 1)
                 call $log_i32
             )
         )
 
-        (loop
-            (block
-                (call $log_i32 (i32.const 123))
-                (br_if 0 (i32.eq (i32.const 0) (i32.const 0)))
-            )
+        (loop $l1
+            (call $log_i32 (i32.const 123))
+            (br_if 0 (i32.ne (i32.const 0) (i32.const 0)))
         )
 
         (call $log_i32 (i32.trunc_f64_s (f64.const 3.141592653589793)))

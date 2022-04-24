@@ -217,17 +217,17 @@ func (g *Generator) buildFuncBody(
 			body := node.
 				Query(ast.QueryTypeOne, ast.MarkerBlock)[0]
 
-			statements = append(statements, &Loop{
-				PreCond: &BinaryOp{
-					Type: TypeI32,
-					Op:   OpEq,
-					Left: wasmExpr,
-					Right: &Const{
-						Type:  TypeI32,
-						Value: "0",
+			// We use a loop to implement while loop.
+			// We need to use If to skip loop entirely if condition is false.
+			// If we don't do it, the loop will execute once even if the condition is false.
+			statements = append(statements, &If{
+				Cond: wasmExpr,
+				TrueBody: []Statement{
+					&Loop{
+						BranchCond: wasmExpr,
+						Body:       g.buildFuncBody(ctx, scope, body),
 					},
 				},
-				Body: g.buildFuncBody(ctx, scope, body),
 			})
 		case node.Has(ast.MarkerRepeat):
 			// TODO: Add support for repeat loops.

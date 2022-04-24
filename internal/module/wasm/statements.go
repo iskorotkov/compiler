@@ -110,7 +110,7 @@ func (i *If) StringIndent(level int) string {
 	}
 
 	trueBodyStr = fmt.Sprintf(`
-%s(block
+%s(then
 %s%[1]s)`, strings.Repeat("  ", level+1), trueBodyStr)
 
 	if len(i.FalseBody) == 0 {
@@ -123,7 +123,7 @@ func (i *If) StringIndent(level int) string {
 			falseBodyStr += stmt.StringIndent(level+2) + "\n"
 		}
 
-		falseBodyStr = fmt.Sprintf(`%s(block
+		falseBodyStr = fmt.Sprintf(`%s(else
 %s%[1]s)`, strings.Repeat("  ", level+1), falseBodyStr)
 
 		return fmt.Sprintf(`%s(if %s%s
@@ -134,30 +134,19 @@ func (i *If) StringIndent(level int) string {
 }
 
 type Loop struct {
-	PreCond  Expr
-	PostCond Expr
-	Body     []Statement
+	BranchCond Expr
+	Body       []Statement
 }
 
 func (l *Loop) StringIndent(level int) string {
 	var bodyStr string
 	for _, stmt := range l.Body {
-		bodyStr += stmt.StringIndent(level+2) + "\n"
+		bodyStr += stmt.StringIndent(level+1) + "\n"
 	}
 
-	if l.PreCond != nil {
-		return fmt.Sprintf(`%s(loop
-  %[1]s(block
-    %[1]s(br_if 0 %[2]s)
-%[3]s  %[1]s)
-%[1]s)`, strings.Repeat("  ", level), l.PreCond.String(), bodyStr)
-	} else {
-		return fmt.Sprintf(`%s(loop
-  %[1]s(block
-%[3]s    %[1]s(br_if 0 %[2]s)
-  %[1]s)
-%[1]s)`, strings.Repeat("  ", level), l.PostCond.String(), bodyStr)
-	}
+	return fmt.Sprintf(`%s(loop
+%[3]s  %[1]s(br_if 0 %[2]s)
+%[1]s)`, strings.Repeat("  ", level), l.BranchCond.String(), bodyStr)
 }
 
 type FuncCall struct {
